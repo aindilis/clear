@@ -1,0 +1,16 @@
+;; Object clear/
+;; SEMANTICDB Tags save file
+(semanticdb-project-database-file "clear/"
+  :tables (list 
+   (semanticdb-table "clear.el"
+    :major-mode 'emacs-lisp-mode
+    :tags '(("global-set-key" code nil nil [1163 1214]) ("global-set-key" code nil nil [1215 1280]) ("global-set-key" code nil nil [1281 1327]) ("global-set-key" code nil nil [1328 1384]) ("global-set-key" code nil nil [1385 1453]) ("global-set-key" code nil nil [1454 1494]) ("clear-send" function (:user-visible-flag t) nil [1496 1646]) ("clear-queue-current-buffer-referent" function (:user-visible-flag t) nil [1648 2400]) ("clear-queue-current-region" function (:user-visible-flag t :arguments ("start" "end")) nil [2402 2882]) ("clear-queue-current-rectangular-region" function (:user-visible-flag t :arguments ("start" "end")) nil [2884 3427]) ("clear-show-current-buffer-referent-old" function (:user-visible-flag t) nil [3429 3744]) ("clear-show-current-buffer-referent" function (:user-visible-flag t) nil [3746 4017]) ("clear-queue-link" function (:user-visible-flag t) nil [4019 4173]) ("clear-queue-all-links" function (:user-visible-flag t :arguments ("start" "end")) nil [4175 4386]) ("w3m-map-command-all-links" function (:arguments ("start" "end" "command" "&optional")) nil [4388 5101]) ("clear" package nil nil [5103 5119]))
+    :file "clear.el"
+    :pointmax 5143
+    :unmatched-syntax 'nil
+    )
+    )
+  :file "semantic.cache"
+  :semantic-tag-version "2.0beta3"
+  :semanticdb-version "2.0beta3"
+  )

@@ -1,0 +1,534 @@
+[logo]
+[                ]
+www/ Software/ PulseAudio/ Documentation/ Developer/ Clients/ DBus
+
+  • Edit
+  • Page History
+  • Repo Info
+
+PulseAudio's D-Bus interface
+
+These pages should eventually contain the final D-Bus control interface
+specification. Currently it's just a draft, comments welcome.
+
+Recent Changes
+
+  • 2012-12-15
+      □ Add the Ladspa interface.
+  • 2012-11-09
+      □ Add signals NewProfile and ProfileRemoved to the Card interface.
+  • 2012-02-15
+      □ Change the FallbackSink and FallbackSource semantics so that they can
+        be unset at any time, also when there are sinks and sources present.
+  • 2011-04-15
+      □ Add property VolumeWritable to the Stream interface.
+      □ Add error BadStateError.
+  • 2011-03-13
+      □ Removed references to "user bus". We will use the session bus, which
+        will behave like a user bus in most systems in the future, hopefully.
+      □ Documented the fact setting stream or device volumes can always be done
+        using a single-channel volume structure, regardless of the real channel
+        map.
+  • 2010-04-15
+      □ Change the RestoreEntry property behavior so that changes are applied
+        immediately to existing streams also.
+  • 2009-08-31
+      □ Add signals FallbackSinkUnset and FallbackSourceUnset to the Core
+        interface.
+      □ Rename IsMuted everywhere to Mute.
+  • 2009-08-18
+      □ Change the volume type of Play and PlayToSink methods in the Sample
+        interface from [Uint32] to Uint32.
+  • 2009-08-15
+      □ Add properties PlaybackStreams and RecordStreams to the Client
+        interface.
+  • 2009-08-04
+      □ Rename AllMemblocks to AccumulatedMemblocks in Memstats.
+  • 2009-08-03
+      □ Add apply_immediately argument to StreamRestore1.AddEntry().
+  • 2009-08-02
+      □ Add signals DeviceUpdated, VolumeUpdated and MuteUpdated to the stream
+        restore entry interface.
+      □ Make properties Device, Volume and IsMuted writable in the stream
+        restore entry interface.
+      □ Add GetEntryByName method to the stream restore interface.
+  • 2009-07-31
+      □ Change the non-extension object path prefix from /org/pulseaudio1/ to /
+        org/pulseaudio/core1/. This way the core and the extensions have
+        consistent object path prefix (/org/pulseaudio/).
+      □ Add signals .Core1.NewExtension and .Core1.ExtensionRemoved.
+      □ Rework the stream restore interface.
+  • 2009-07-15
+      □ Remove the sink argument from Sample.Play() and add new method
+        Sample.PlayToSink().
+  • 2009-07-12
+      □ Add Cards property to Core.
+  • 2009-07-09
+      □ Rearrange the channel position enumeration so that the numbering
+        matches the one used internally and with the C API.
+  • 2009-07-01
+      □ Change the org.pulseaudio prefix to org.PulseAudio.
+      □ Replace the lookup service's GetAddress method with the Address
+        property.
+      □ Remove sample loading methods that use files. Hide the difference
+        between lazy and non-lazy samples.
+      □ Add Sinks and Sources properties to Card.
+      □ Prefix boolean properties with "Is" or "Has".
+      □ Move FlatVolume property from Sink to Device.
+      □ Change enumeration types from Byte to Uint32.
+      □ Remove the Self interface, move the functionality to Core and Client
+        interfaces.
+      □ Move everything in the PlaybackStream interface to the Stream interface
+        and remove PlaybackStream.
+      □ Add StreamEvent to the Stream interface.
+      □ Rename proplist -> property list.
+      □ Change argument names to lowercase, as it seems to be the standard way
+        (this statement is actually only based on that the D-Bus spec has them
+        lowercase in the examples).
+
+Overview
+
+Previously the only D-Bus services PulseAudio provided were an implementation
+of the Device Reservation spec for sound cards and reservation of the
+org.pulseaudio.Server name on the session or system bus for server tracking
+purposes. Those features remain untouched, and this document doesn't have
+anything to do with them.
+
+The new functionality consists of two parts: a server lookup service and the
+main control interface. When clients want to use the control interface, they
+have to first figure out where they should connect to. How to connect to the
+control interface is specified on the ConnectingToServer page. The main control
+interface is provided as a "D-Bus server". That is, it's not available on any
+bus, but instead clients make direct connections to PulseAudio.
+
+Requiring clients to use peer-to-peer connections instead of the traditional
+system/session bus has turned out to cause lots of trouble and confusion. It
+was perhaps a bad decision, but initially it seemed like a good idea:
+
+  • It's not possible to connect to a session bus remotely. The chosen approach
+    allows remote connections, without any special handling needed in the
+    applications.
+  • A peer-to-peer connection supposedly has lower latency than a bus, so e.g.
+    volume changes happen quicker. (No empirical evidence available.)
+  • PulseAudio is a user daemon, not a session daemon, so the session bus is
+    not a good match. This point is undermined by the fact that the discovery
+    service is on the session bus - any problems related to the user/session
+    mismatch affect also the discovery service.
+
+Open Questions
+
+  • Does it make sense for clients to save card names? If not, the
+    .Core1.GetCardByName method is probably unneeded.
+  • Same for .Core1.Card.GetProfileByName.
+  • Same for .Core1.Device.GetPortByName.
+  • Do error cases need better documentation? The current guideline has been
+    that if an error can be returned even if the situation is more like a
+    special case than an error, it is explicitly documented.
+
+Control API
+
+The detailed descriptions are spread to separate pages, roughly one per object
+type. This page provides only a minimal reference and links to the details.
+
+Notation
+
+  • Arrays are written as []. For example, [Byte] is an array of bytes.
+  • Dictionaries are written as { -> }. For example, {String -> [Byte]} is a
+    dictionary with strings as keys and byte arrays as values.
+  • Structs are written as (, , ..., ). For example (Byte, Uint32) is a struct
+    with two members: a byte and an unsigned 32 bit integer.
+  • On this page only, property access is denoted with (r) for read and with
+    (rw) for read/write.
+  • The rest should be obvious.
+
+Property Lists
+
+Property lists (not to be confused with D-Bus properties) are dictionaries that
+are associated with many objects. The keys are utf-8 strings and the values are
+arbitrary data (usually they are utf-8 strings too, though). Property lists are
+used to attach many kinds of metadata to the objects: names, descriptions,
+intended roles and so on. For now the best source of information about
+available properties is the proplist.h file documentation.
+
+General Server Functionality
+
+  • Object /org/pulseaudio/core1 implements interface org.PulseAudio.Core1.
+
+org.PulseAudio.Core1
+
+Properties:
+
+  • InterfaceRevision : Uint32 (r)
+  • Name : String (r)
+  • Version : String (r)
+  • IsLocal: Boolean (r)
+  • Username : String (r)
+  • Hostname : String (r)
+  • DefaultChannels : [Uint32] (rw)
+  • DefaultSampleFormat : Uint32 (rw)
+  • DefaultSampleRate : Uint32 (rw)
+  • Cards : [ObjectPath] (r)
+  • Sinks : [ObjectPath] (r)
+  • FallbackSink : ObjectPath (rw) # Doesn't exist when the fallback sink is
+    unset.
+  • Sources : [ObjectPath] (r)
+  • FallbackSource : ObjectPath (rw) # Doesn't exist when the fallback source
+    is unset.
+  • PlaybackStreams : [ObjectPath] (r)
+  • RecordStreams: [ObjectPath] (r)
+  • Samples : [ObjectPath] (r)
+  • Modules : [ObjectPath] (r)
+  • Clients : [ObjectPath] (r)
+  • MyClient : ObjectPath (r)
+  • Extensions : [String] (r) Methods:
+
+  • GetCardByName(in name : String ; out card : ObjectPath)
+
+  • GetSinkByName(in name : String ; out sink : ObjectPath)
+  • GetSourceByName(in name : String ; out source : ObjectPath)
+  • GetSampleByName(in name : String ; out sample : ObjectPath)
+  • UploadSample(in name : String, sample_format : Uint32, sample_rate :
+    Uint32, channels : [Uint32], default_volume : [Uint32], property_list :
+    {String -> [Byte]}, data : [Byte] ; out sample : ObjectPath)
+  • LoadModule(in name : String, arguments : {String -> String} ; out module :
+    ObjectPath)
+  • Exit()
+  • ListenForSignal(in signal : String, objects : [ObjectPath])
+  • StopListeningForSignal(in signal : String) Signals:
+
+  • NewCard(card : ObjectPath)
+
+  • CardRemoved(card : ObjectPath)
+  • NewSink(sink : ObjectPath)
+  • SinkRemoved(sink : ObjectPath)
+  • FallbackSinkUpdated(sink : ObjectPath)
+  • FallbackSinkUnset()
+  • NewSource(source : ObjectPath)
+  • SourceRemoved(source : ObjectPath)
+  • FallbackSourceUpdated(source : ObjectPath)
+  • FallbackSourceUnset()
+  • NewPlaybackStream(playback_stream : ObjectPath)
+  • PlaybackStreamRemoved(playback_stream : ObjectPath)
+  • NewRecordStream(record_stream : ObjectPath)
+  • RecordStreamRemoved(record_stream : ObjectPath)
+  • NewSample(sample : ObjectPath)
+  • SampleRemoved(sample : ObjectPath)
+  • NewModule(module : ObjectPath)
+  • ModuleRemoved(module : ObjectPath)
+  • NewClient(client : ObjectPath)
+  • ClientRemoved(client : ObjectPath)
+  • NewExtension(extension : String)
+  • ExtensionRemoved(extension : String)
+
+Memory Statistics
+
+  • Object /org/pulseaudio/core1/memstats implements interface
+    org.PulseAudio.Core1.Memstats.
+
+org.PulseAudio.Core1.Memstats
+
+Properties:
+
+  • CurrentMemblocks : Uint32 (r)
+  • CurrentMemblocksSize : Uint32 (r)
+  • AccumulatedMemblocks : Uint32 (r)
+  • AccumulatedMemblocksSize : Uint32 (r)
+  • SampleCacheSize : Uint32 (r)
+
+Cards
+
+  • Objects /org/pulseaudio/core1/cardX implement interface
+    org.PulseAudio.Core1.Card.
+
+org.PulseAudio.Core1.Card
+
+Properties:
+
+  • Index : Uint32 (r)
+  • Name : String (r)
+  • Driver : String (r)
+  • OwnerModule : ObjectPath (r) # Does not exist with all cards.
+  • Sinks : [ObjectPath] (r)
+  • Sources : [ObjectPath] (r)
+  • Profiles : [ObjectPath] (r)
+  • ActiveProfile : ObjectPath (rw) # Does not exist if there are no profiles.
+  • PropertyList : {String -> [Byte]} (r) Methods:
+
+  • GetProfileByName(in name : String ; out profile : ObjectPath) Signals:
+
+  • ActiveProfileUpdated(profile : ObjectPath)
+
+  • NewProfile(profile : ObjectPath)
+  • ProfileRemoved(profile : ObjectPath)
+  • PropertyListUpdated(property_list : {String -> [Byte]})
+
+Card Profiles
+
+  • Objects /org/pulseaudio/core1/cardX/profileY implement interface
+    org.PulseAudio.Core1.CardProfile.
+
+org.PulseAudio.Core1.CardProfile
+
+Properties:
+
+  • Index : Uint32 (r)
+  • Name : String (r)
+  • Description : String (r)
+  • Sinks : Uint32 (r)
+  • Sources : Uint32 (r)
+  • Priority : Uint32 (r)
+
+Devices (Sinks and Sources)
+
+  • Objects /org/pulseaudio/core1/sinkX and /org/pulseaudio/core1/sourceX
+    implement interface org.PulseAudio.Core1.Device.
+  • Objects /org/pulseaudio/core1/sinkX implement interface
+    org.PulseAudio.Core1.Sink.
+  • Objects /org/pulseaudio/core1/sourceX implement interface
+    org.PulseAudio.Core1.Source.
+
+org.PulseAudio.Core1.Device
+
+Properties:
+
+  • Index : Uint32 (r)
+  • Name : String (r)
+  • Driver : String (r)
+  • OwnerModule : ObjectPath (r) # Does not exist for all devices.
+  • Card : ObjectPath (r) # Does not exist with all devices.
+  • SampleFormat : Uint32 (r)
+  • SampleRate : Uint32 (r)
+  • Channels : [Uint32] (r)
+  • Volume : [Uint32] (rw)
+  • HasFlatVolume : Boolean (r)
+  • HasConvertibleToDecibelVolume : Boolean (r)
+  • BaseVolume : Uint32 (r)
+  • VolumeSteps : Uint32 (r)
+  • Mute : Boolean (rw)
+  • HasHardwareVolume : Boolean (r)
+  • HasHardwareMute : Boolean (r)
+  • ConfiguredLatency : Uint64 # usec
+  • HasDynamicLatency : Boolean (r)
+  • Latency : Uint64 (r) # usec, does not exist with all devices.
+  • IsHardwareDevice : Boolean (r)
+  • IsNetworkDevice : Boolean (r)
+  • State : Uint32 (r)
+  • Ports : [ObjectPath] (r)
+  • ActivePort : ObjectPath (rw) # Does not exist if there are no ports.
+  • PropertyList : {String -> [Byte]} (r) Methods:
+
+  • Suspend(in suspend : Boolean)
+
+  • GetPortByName(in name : String ; out port : ObjectPath) Signals:
+
+  • VolumeUpdated(volume : [Uint32])
+
+  • MuteUpdated(muted : Boolean)
+  • StateUpdated(state : Uint32)
+  • ActivePortUpdated(port : ObjectPath)
+  • PropertyListUpdated(property_list : {String -> [Byte]})
+
+org.PulseAudio.Core1.Sink
+
+Properties:
+
+  • MonitorSource : ObjectPath (r)
+
+org.PulseAudio.Core1.Source
+
+Properties:
+
+  • MonitorOfSink : ObjectPath (r) # Does not exist if this is not a monitor
+    source.
+
+Device Ports
+
+  • Objects /org/pulseaudio/core1/sinkX/portY and /org/pulseaudio/core1/sourceX
+    /portY implement interface org.PulseAudio.Core1.DevicePort.
+
+org.PulseAudio.Core1.DevicePort
+
+Properties:
+
+  • Index : Uint32 (r)
+  • Name : String (r)
+  • Description : String (r)
+  • Priority : Uint32 (r)
+
+Streams
+
+  • Objects /org/pulseaudio/core1/playback_streamX and /org/pulseaudio/core1/
+    record_streamX implement interface org.PulseAudio.Core1.Stream.
+
+org.PulseAudio.Core1.Stream
+
+Properties:
+
+  • Index : Uint32 (r)
+  • Driver : String (r)
+  • OwnerModule : ObjectPath (r) # Does not exist with all streams.
+  • Client : ObjectPath (r) # Does not exist with all streams.
+  • Device : ObjectPath (r)
+  • SampleFormat : Uint32 (r)
+  • SampleRate : Uint32 (r)
+  • Channels : [Uint32] (r)
+  • Volume : [Uint32] (rw)
+  • VolumeWritable : Boolean (r)
+  • Mute : Boolean (rw)
+  • BufferLatency : Uint64 (r) # usec
+  • DeviceLatency : Uint64 (r) # usec
+  • ResampleMethod : String (r)
+  • PropertyList : {String -> [Byte]} (r) Methods:
+
+  • Move(in device : ObjectPath)
+
+  • Kill() Signals:
+
+  • DeviceUpdated(device : ObjectPath)
+
+  • SampleRateUpdated(sample_rate : Uint32)
+  • VolumeUpdated(volume : [Uint32])
+  • MuteUpdated(muted : Boolean)
+  • PropertyListUpdated(property_list : {String -> [Byte]})
+  • StreamEvent(name : String, property_list : {String -> [Byte]})
+
+Samples
+
+  • Objects /org/pulseaudio/core1/sampleX implement interface
+    org.PulseAudio.Core1.Sample.
+
+org.PulseAudio.Core1.Sample
+
+Properties:
+
+  • Index : Uint32 (r)
+  • Name : String (r)
+  • SampleFormat : Uint32 (r) # Does not exist with all samples.
+  • SampleRate : Uint32 (r) # Does not exist with all samples.
+  • Channels : [Uint32] (r) # Does not exist with all samples.
+  • DefaultVolume : [Uint32] (r) # Does not exist with all samples.
+  • Duration : Uint64 (r) # usec, does not exist with all samples.
+  • Bytes : Uint32 (r) # Does not exist with all samples.
+  • PropertyList : {String -> [Byte]} (r) Methods:
+
+  • Play(in volume : Uint32, property_list : {String -> [Byte]})
+
+  • PlayToSink(in sink : ObjectPath, volume : Uint32, property_list : {String
+    -> [Byte]})
+  • Remove() Signals:
+
+  • PropertyListUpdated(property_list : {String -> [Byte]})
+
+Modules
+
+  • Objects /org/pulseaudio/core1/moduleX implement interface
+    org.PulseAudio.Core1.Module.
+
+org.PulseAudio.Core1.Module
+
+Properties:
+
+  • Index : Uint32 (r)
+  • Name : String (r)
+  • Arguments : {String -> String} (r)
+  • UsageCounter : Uint32 (r) # Does not exist with all modules.
+  • PropertyList : {String -> [Byte]} (r) Methods:
+
+  • Unload() Signals:
+
+  • PropertyListUpdated(property_list : {String -> [Byte]})
+
+Clients
+
+  • Objects /org/pulseaudio/core1/clientX implement interface
+    org.PulseAudio.Core1.Client.
+
+org.PulseAudio.Core1.Client
+
+Properties:
+
+  • Index : Uint32 (r)
+  • Driver : String (r)
+  • OwnerModule : ObjectPath (r) # Does not exist with all clients.
+  • PlaybackStreams : [ObjectPath] (r)
+  • RecordStreams : [ObjectPath] (r)
+  • PropertyList : {String -> [Byte]} (r) Methods:
+
+  • Kill()
+
+  • UpdateProperties(in property_list : {String -> [Byte]}, update_mode :
+    Uint32)
+  • RemoveProperties(in keys : [String]) Signals:
+
+  • PropertyListUpdated(property_list : {String -> [Byte]})
+
+  • ClientEvent(name : String, property_list : {String -> [Byte]})
+
+Stream Restore Extension
+
+  • Object /org/pulseaudio/stream_restore1 implements interface
+    org.PulseAudio.Ext.StreamRestore1.
+  • Objects /org/pulseaudio/stream_restore1/entryX implement interface
+    org.PulseAudio.Ext.StreamRestore1.RestoreEntry.
+
+org.PulseAudio.Ext.StreamRestore1
+
+Properties:
+
+  • InterfaceRevision : Uint32 (r)
+  • Entries : [ObjectPath] (r) Methods:
+
+  • AddEntry(in name : String, device : String, volume : [(Uint32, Uint32)],
+    mute : Boolean, apply_immediately : Boolean ; out entry : ObjectPath)
+
+  • GetEntryByName(in name : String ; out entry : ObjectPath) Signals:
+
+  • NewEntry(entry : ObjectPath)
+
+  • EntryRemoved(entry : ObjectPath)
+
+org.PulseAudio.Ext.StreamRestore1.RestoreEntry
+
+Properties:
+
+  • Index : Uint32 (r)
+  • Name : String (r)
+  • Device : String (rw)
+  • Volume : [(Uint32, Uint32)] (rw)
+  • Mute : Boolean (rw) Methods:
+
+  • Remove() Signals:
+
+  • DeviceUpdated(device : String)
+
+  • VolumeUpdated(volume : [(Uint32, Uint32)])
+  • MuteUpdated(muted : Boolean)
+
+Ladspa Extension
+
+  • Objects /org/pulseaudio/core1/sinkX, where X is the index of a ladspa sink,
+    implement interface org.PulseAudio.Ext.Ladspa1.
+
+org.PulseAudio.Ext.Ladspa1
+
+Properties:
+
+  • AlgorithmParameters : ([Double], [Boolean]) (rw)
+
+Enumerations
+
+  • Sample formats
+  • Channel positions
+  • Device states
+  • Update modes
+
+Errors
+
+  • org.PulseAudio.Core1.NotFoundError
+  • org.PulseAudio.Core1.NoSuchPropertyError
+  • org.PulseAudio.Core1.BadStateError
+
+Links: DBus/Card DBus/CardProfile DBus/Client DBus/ConnectingToServer DBus/Core
+DBus/Device DBus/DevicePort DBus/Enumerations DBus/Errors DBus/Ladspa ... DBus/
+Memstats DBus/Module DBus/Sample DBus/Stream DBus/StreamRestore Ideas
+Last edited Wed Jul 17 20:56:26 2013

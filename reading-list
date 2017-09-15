@@ -1,0 +1,67 @@
+@Book{ebbinghaus,
+  author =	"H. D. Ebbinghaus and J. Flum and W. Thomas",
+  title =	"Mathematical Logic",
+  year = 	"1984",
+  publisher =	"Springer--Verlag",
+}
+http://books.google.com/books?id=rAy-NliGEPMC&printsec=frontcover&dq=ebbinghaus+and+flum&source=bl&ots=j1uEtceitd&sig=FH1g7E5FCSeY0frJHbNr5FJBnL8&hl=en&ei=v4szTf-nFYL7lwfsl_zOCg&sa=X&oi=book_result&ct=result&resnum=2&ved=0CBsQ6AEwAQ#v=onepage&q&f=false
+
+
+@Book{ef_finite_book95,
+  author =	"H. D. Ebbinghaus and J. Flum",
+  title =	"Finite Model Theory",
+  publisher =	"Springer-Verlag",
+  address = "Berlin",
+  year =  "1995",
+}
+
+
+@Book{ck_90,
+  author =	"C. C. Chang and H. J. Keisler",
+  title =	"Model Theory",
+  publisher =	"North Holland",
+  year =    "1990",
+}
+http://www.amazon.com/Model-Theory-Studies-Foundations-Mathematics/dp/0444880542
+
+
+@Book{je78,
+  author =	"T. Jech",
+  title =	"Set theory",
+  publisher =	"Academic Press",
+  year =    "1978",
+  address = "New York",
+}
+????
+http://www.amazon.com/Set-Theory-Thomas-Jech/dp/3540440852
+
+
+@Book{Kunen1983,
+  author =	"K. Kunen",
+  title =	"Set Theory: An Introduction to Independence Proofs",
+  publisher =	"North-Holland",
+  address = "Amsterdam",
+  year =  "1983",
+}
+http://www.amazon.com/Introduction-Independence-Studies-Foundations-Mathematics/dp/0444868399/ref=pd_sim_b_2
+
+
+
+@Book{Davis65,
+  author =	"Martin Davis",
+  title =	"The Undecidable",
+  publisher =	"Raven Press",
+  year =    "1965",
+  address = "Hewlett, NY",
+}
+
+
+
+@Book{heij:ftg,
+  editor =	"J. van Heijenoort",
+  publisher =	"Harvard University Press",
+  title =   "{From Frege to G{\"o}del: a Source Book in
+  	 Mathematical Logic, 1879-1931}",
+  year = 	      "1967",
+}
+# From Frege to GÃ¶del: A Source Book in Mathematical Logic, 1879-1931

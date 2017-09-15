@@ -1,0 +1,10 @@
+/var/lib/myfrdcsa/repositories/internal/git/iaec-notes/requirements/sayer2-req
+/var/lib/myfrdcsa/repositories/internal/git/iaec-notes/requirements/release-helper-req
+/var/lib/myfrdcsa/repositories/internal/git/iaec-notes/requirements/facebook.notes
+/var/lib/myfrdcsa/repositories/internal/git/iaec-notes/requirements/automated-legacy-testing-req
+/var/lib/myfrdcsa/repositories/internal/git/iaec-notes/requirements/letter-to-jess-balint.notes
+/var/lib/myfrdcsa/repositories/internal/git/iaec-notes/requirements/interestingness/to.do
+/var/lib/myfrdcsa/repositories/internal/git/iaec-notes/iaec.notes
+/var/lib/myfrdcsa/repositories/internal/git/iaec-notes/attempts/2/to.do
+/var/lib/myfrdcsa/repositories/internal/git/iaec-notes/attempts/1/system.pl
+/var/lib/myfrdcsa/repositories/internal/git/iaec-notes/attempts/3/to.do

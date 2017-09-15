@@ -1,0 +1,22 @@
+$VAR1 = {
+          'File' => '/usr/share/perl5/Clear/Doc.pm',
+          'Item' => [
+                      {
+                        'ActiveReadList' => 2
+                      }
+                    ],
+          'Caller' => 'Clear::CurrentDoc'
+        };
+f<<</var/lib/myfrdcsa/codebases/minor/news-monitor/data/News/nnvirtual:misc/id_--7718-Planet-Debian-nnrss--_--nobody--_-John-Goerzen--I-Give-Up-on-Google--Free-is-Too-Expensive-_134834_Wed--06-May-2015-18-26-20--0000-a5c9a95f009bd58461990d2d7522d2ce.html>>>
+Tokens: empty
+AllTokens: empty
+Initialized.
+>>|
+Tk::Error: Can't call method "CommandGoto" on an undefined value at /var/lib/myfrdcsa/codebases/internal/clear/Clear/Mod/Reader/Tab/Display.pm line 37.
+ Tk callback for .frame1.notebook.1.notebook.display.frame.button3
+ Tk::__ANON__ at /usr/lib/x86_64-linux-gnu/perl5/5.20/Tk.pm line 251
+ Tk::Button::butUp at /usr/lib/x86_64-linux-gnu/perl5/5.20/Tk/Button.pm line 175
+ <ButtonRelease-1>
+ (command bound to event)
+underrun!!! (at least 6219.388 ms long)
+killed

@@ -1,0 +1,13 @@
+Here are  a few features that  would do this system  well.  First, the
+sentence parsing, as well as the junk recognition, should be improved,
+so that we minimize false positives and negatives.
+
+We  also  want  to  add  the  ability to  speak  into  the  interface,
+"clairvoyance, backward", and it will reread a sentence, etc.
+
+More preprocessing is certainly necessary.  Better sentence splitter.
+
+We want a flag  so that the system opens a viewer  for each file while
+reading it.
+
+Want a quizzer on acronyms.

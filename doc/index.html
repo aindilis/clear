@@ -1,0 +1,710 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>DBus</title>
+
+<link rel="stylesheet" href="../../../../../../style.css" type="text/css" />
+<link rel="stylesheet" href="../../../../../../xorg.css" type="text/css" />
+
+<link rel="stylesheet" href="../../../../../../local.css" type="text/css" />
+
+
+<link rel="alternate" type="application/x-wiki" title="Edit this page" href="https://secure.freedesktop.org/write/www/ikiwiki.cgi?page=Software%2FPulseAudio%2FDocumentation%2FDeveloper%2FClients%2FDBus&amp;do=edit" />
+
+
+
+
+
+</head>
+<body>
+
+<div class="page">
+<div class="pageheader">
+<div class="header">
+<span class="logo"><img src="../../../../../../logo.png" /></span>
+
+
+<form method="get" action="https://www.google.com/search" id="searchform">
+ <div>
+  <input name="sitesearch" value="https://www.freedesktop.org/wiki/" type="hidden" />
+  <input name="q" value="" id="searchbox" size="16" maxlength="255" type="text"
+   />
+ </div>
+</form>
+
+
+<span class="headerpath">
+<span class="parentlinks">
+
+<a href="../../../../../../">www</a>/ 
+
+<a href="../../../../../">Software</a>/ 
+
+<a href="../../../../">PulseAudio</a>/ 
+
+<a href="../../../">Documentation</a>/ 
+
+<a href="../../">Developer</a>/ 
+
+<a href="../">Clients</a>/ 
+
+</span>
+<span class="title">
+DBus
+
+</span>
+</span>
+</div>
+
+
+<span class="actions">
+<ul>
+
+<li><a href="https://secure.freedesktop.org/write/www/ikiwiki.cgi?page=Software%2FPulseAudio%2FDocumentation%2FDeveloper%2FClients%2FDBus&amp;do=edit" rel="nofollow">Edit</a></li>
+
+
+
+<li><a href="https://secure.freedesktop.org/cgit/www/log/Software/PulseAudio/Documentation/Developer/Clients/DBus.mdwn">Page History</a></li>
+
+
+<li><a href="https://secure.freedesktop.org/cgit/www/">Repo Info</a></li>
+
+
+
+
+</ul>
+</span>
+
+
+
+
+
+
+</div>
+
+
+
+<div id="pagebody">
+
+<div id="content">
+<h1 id="pulseaudiosd-businterface">PulseAudio's D-Bus interface</h1>
+
+<p>These pages should eventually contain the final D-Bus control interface specification. Currently it's just a draft, comments welcome. </p>
+
+<h2 id="recentchanges">Recent Changes</h2>
+
+<ul>
+<li>2012-12-15 
+<ul>
+<li>Add the Ladspa interface. </li>
+</ul></li>
+<li>2012-11-09 
+<ul>
+<li>Add signals NewProfile and ProfileRemoved to the Card interface. </li>
+</ul></li>
+<li>2012-02-15 
+<ul>
+<li>Change the FallbackSink and FallbackSource semantics so that they can be unset at any time, also when there are sinks and sources present. </li>
+</ul></li>
+<li>2011-04-15 
+<ul>
+<li>Add property VolumeWritable to the Stream interface. </li>
+<li>Add error BadStateError. </li>
+</ul></li>
+<li>2011-03-13 
+<ul>
+<li>Removed references to "user bus". We will use the session bus, which will behave like a user bus in most systems in the future, hopefully. </li>
+<li>Documented the fact setting stream or device volumes can always be done using a single-channel volume structure, regardless of the real channel map. </li>
+</ul></li>
+<li>2010-04-15 
+<ul>
+<li>Change the RestoreEntry property behavior so that changes are applied immediately to existing streams also. </li>
+</ul></li>
+<li>2009-08-31 
+<ul>
+<li>Add signals FallbackSinkUnset and FallbackSourceUnset to the Core interface. </li>
+<li>Rename IsMuted everywhere to Mute. </li>
+</ul></li>
+<li>2009-08-18 
+<ul>
+<li>Change the volume type of Play and PlayToSink methods in the Sample interface from [Uint32] to Uint32. </li>
+</ul></li>
+<li>2009-08-15 
+<ul>
+<li>Add properties PlaybackStreams and RecordStreams to the Client interface. </li>
+</ul></li>
+<li>2009-08-04 
+<ul>
+<li>Rename AllMemblocks to AccumulatedMemblocks in Memstats. </li>
+</ul></li>
+<li>2009-08-03 
+<ul>
+<li>Add apply_immediately argument to StreamRestore1.AddEntry(). </li>
+</ul></li>
+<li>2009-08-02 
+<ul>
+<li>Add signals DeviceUpdated, VolumeUpdated and MuteUpdated to the stream restore entry interface. </li>
+<li>Make properties Device, Volume and IsMuted writable in the stream restore entry interface. </li>
+<li>Add GetEntryByName method to the stream restore interface. </li>
+</ul></li>
+<li>2009-07-31 
+<ul>
+<li>Change the non-extension object path prefix from /org/pulseaudio1/ to /org/pulseaudio/core1/. This way the core and the extensions have consistent object path prefix (/org/pulseaudio/). </li>
+<li>Add signals .Core1.NewExtension and .Core1.ExtensionRemoved. </li>
+<li>Rework the stream restore interface. </li>
+</ul></li>
+<li>2009-07-15 
+<ul>
+<li>Remove the sink argument from Sample.Play() and add new method Sample.PlayToSink(). </li>
+</ul></li>
+<li>2009-07-12 
+<ul>
+<li>Add Cards property to Core. </li>
+</ul></li>
+<li>2009-07-09 
+<ul>
+<li>Rearrange the channel position enumeration so that the numbering matches the one used internally and with the C API. </li>
+</ul></li>
+<li>2009-07-01 
+<ul>
+<li>Change the org.pulseaudio prefix to org.PulseAudio. </li>
+<li>Replace the lookup service's GetAddress method with the Address property. </li>
+<li>Remove sample loading methods that use files. Hide the difference between lazy and non-lazy samples. </li>
+<li>Add Sinks and Sources properties to Card. </li>
+<li>Prefix boolean properties with "Is" or "Has". </li>
+<li>Move FlatVolume property from Sink to Device. </li>
+<li>Change enumeration types from Byte to Uint32. </li>
+<li>Remove the Self interface, move the functionality to Core and Client interfaces. </li>
+<li>Move everything in the PlaybackStream interface to the Stream interface and remove PlaybackStream. </li>
+<li>Add StreamEvent to the Stream interface. </li>
+<li>Rename proplist -> property list. </li>
+<li>Change argument names to lowercase, as it seems to be the standard way (this statement is actually only based on that the D-Bus spec has them lowercase in the examples). </li>
+</ul></li>
+</ul>
+
+<h2 id="overview">Overview</h2>
+
+<p>Previously the only D-Bus services PulseAudio provided were an implementation of the <a href="http://git.0pointer.de/?p=reserve.git;a=blob_plain;f=reserve.txt">Device Reservation spec</a> for sound cards and reservation of the org.pulseaudio.Server name on the session or system bus for server tracking purposes. Those features remain untouched, and this document doesn't have anything to do with them. </p>
+
+<p>The new functionality consists of two parts: a server lookup service and the main control interface. When clients want to use the control interface, they have to first figure out where they should connect to. How to connect to the control interface is specified on the <a href="./ConnectingToServer/">ConnectingToServer</a> page. The main control interface is provided as a "D-Bus server". That is, it's not available on any bus, but instead clients make direct connections to PulseAudio.</p>
+
+<p>Requiring clients to use peer-to-peer connections instead of the traditional system/session bus has turned out to cause lots of trouble and confusion. It was perhaps a bad decision, but initially it seemed like a good idea:</p>
+
+<ul>
+<li>It's not possible to connect to a session bus remotely. The chosen approach allows remote connections, without any special handling needed in the applications.</li>
+<li>A peer-to-peer connection supposedly has lower latency than a bus, so e.g. volume changes happen quicker. (No empirical evidence available.)</li>
+<li>PulseAudio is a user daemon, not a session daemon, so the session bus is not a good match. This point is undermined by the fact that the discovery service is on the session bus - any problems related to the user/session mismatch affect also the discovery service.</li>
+</ul>
+
+<h2 id="openquestions">Open Questions</h2>
+
+<ul>
+<li>Does it make sense for clients to save card names? If not, the .Core1.GetCardByName method is probably unneeded. </li>
+<li>Same for .Core1.Card.GetProfileByName. </li>
+<li>Same for .Core1.Device.GetPortByName. </li>
+<li>Do error cases need better documentation? The current guideline has been that if an error can be returned even if the situation is more like a special case than an error, it is explicitly documented. </li>
+</ul>
+
+<h2 id="controlapi">Control API</h2>
+
+<p>The detailed descriptions are spread to separate pages, roughly one per object type. This page provides only a minimal reference and links to the details. </p>
+
+<h3 id="notation">Notation</h3>
+
+<ul>
+<li>Arrays are written as [<type>]. For example, [Byte] is an array of bytes.  </li>
+<li>Dictionaries are written as {<type1> -> <type2>}. For example, {String -> [Byte]} is a dictionary with strings as keys and byte arrays as values. </li>
+<li>Structs are written as (<type1>, <type2>, ..., <typeN>). For example (Byte, Uint32) is a struct with two members: a byte and an unsigned 32 bit integer. </li>
+<li>On this page only, property access is denoted with (r) for read and with (rw) for read/write. </li>
+<li>The rest should be obvious. </li>
+</ul>
+
+<h3 id="propertylists">Property Lists</h3>
+
+<p>Property lists (not to be confused with D-Bus properties) are dictionaries that are associated with many objects. The keys are utf-8 strings and the values are arbitrary data (usually they are utf-8 strings too, though). Property lists are used to attach many kinds of metadata to the objects: names, descriptions, intended roles and so on. For now the best source of information about available properties is the <a href="http://0pointer.de/lennart/projects/pulseaudio/doxygen/proplist_8h.html">proplist.h</a> file documentation. </p>
+
+<h3 id="generalserverfunctionality">General Server Functionality</h3>
+
+<ul>
+<li>Object <strong>/org/pulseaudio/core1</strong> implements interface <strong>org.PulseAudio.Core1</strong>. </li>
+</ul>
+
+<h4 id="org.pulseaudio.core1">org.PulseAudio.Core1</h4>
+
+<p><a href="./Core/">Properties</a>: </p>
+
+<ul>
+<li><a href="./Core/">InterfaceRevision</a> : Uint32 (r) </li>
+<li><a href="./Core/">Name</a> : String (r) </li>
+<li><a href="./Core/">Version</a> : String (r) </li>
+<li><a href="./Core/">IsLocal</a>: Boolean (r) </li>
+<li><a href="./Core/">Username</a> : String (r) </li>
+<li><a href="./Core/">Hostname</a> : String (r) </li>
+<li><a href="./Core/">DefaultChannels</a> : [Uint32] (rw) </li>
+<li><a href="./Core/">DefaultSampleFormat</a> : Uint32 (rw) </li>
+<li><a href="./Core/">DefaultSampleRate</a> : Uint32 (rw) </li>
+<li><a href="./Core/">Cards</a> : [ObjectPath] (r) </li>
+<li><a href="./Core/">Sinks</a> : [ObjectPath] (r) </li>
+<li><a href="./Core/">FallbackSink</a> : ObjectPath (rw) # Doesn't exist when the fallback sink is unset. </li>
+<li><a href="./Core/">Sources</a> : [ObjectPath] (r) </li>
+<li><a href="./Core/">FallbackSource</a> : ObjectPath (rw) # Doesn't exist when the fallback source is unset. </li>
+<li><a href="./Core/">PlaybackStreams</a> : [ObjectPath] (r) </li>
+<li><a href="./Core/">RecordStreams</a>: [ObjectPath] (r) </li>
+<li><a href="./Core/">Samples</a> : [ObjectPath] (r) </li>
+<li><a href="./Core/">Modules</a> : [ObjectPath] (r) </li>
+<li><a href="./Core/">Clients</a> : [ObjectPath] (r) </li>
+<li><a href="./Core/">MyClient</a> : ObjectPath (r) </li>
+<li><p><a href="./Core/">Extensions</a> : [String] (r) 
+<a href="./Core/">Methods</a>: </p></li>
+<li><p><a href="./Core/">GetCardByName</a>(in name : String ; out card : ObjectPath) </p></li>
+<li><a href="./Core/">GetSinkByName</a>(in name : String ; out sink : ObjectPath) </li>
+<li><a href="./Core/">GetSourceByName</a>(in name : String ; out source : ObjectPath) </li>
+<li><a href="./Core/">GetSampleByName</a>(in name : String ; out sample : ObjectPath) </li>
+<li><a href="./Core/">UploadSample</a>(in name : String, sample_format : Uint32, sample_rate : Uint32, channels : [Uint32], default_volume : [Uint32], property_list : {String -> [Byte]}, data : [Byte] ; out sample : ObjectPath) </li>
+<li><a href="./Core/">LoadModule</a>(in name : String, arguments : {String -> String} ; out module : ObjectPath) </li>
+<li><a href="./Core/">Exit</a>() </li>
+<li><a href="./Core/">ListenForSignal</a>(in signal : String, objects : [ObjectPath]) </li>
+<li><p><a href="./Core/">StopListeningForSignal</a>(in signal : String) 
+<a href="./Core/">Signals</a>: </p></li>
+<li><p><a href="./Core/">NewCard</a>(card : ObjectPath) </p></li>
+<li><a href="./Core/">CardRemoved</a>(card : ObjectPath) </li>
+<li><a href="./Core/">NewSink</a>(sink : ObjectPath) </li>
+<li><a href="./Core/">SinkRemoved</a>(sink : ObjectPath) </li>
+<li><a href="./Core/">FallbackSinkUpdated</a>(sink : ObjectPath) </li>
+<li><a href="./Core/">FallbackSinkUnset</a>() </li>
+<li><a href="./Core/">NewSource</a>(source : ObjectPath) </li>
+<li><a href="./Core/">SourceRemoved</a>(source : ObjectPath) </li>
+<li><a href="./Core/">FallbackSourceUpdated</a>(source : ObjectPath) </li>
+<li><a href="./Core/">FallbackSourceUnset</a>() </li>
+<li><a href="./Core/">NewPlaybackStream</a>(playback_stream : ObjectPath) </li>
+<li><a href="./Core/">PlaybackStreamRemoved</a>(playback_stream : ObjectPath) </li>
+<li><a href="./Core/">NewRecordStream</a>(record_stream : ObjectPath) </li>
+<li><a href="./Core/">RecordStreamRemoved</a>(record_stream : ObjectPath) </li>
+<li><a href="./Core/">NewSample</a>(sample : ObjectPath) </li>
+<li><a href="./Core/">SampleRemoved</a>(sample : ObjectPath) </li>
+<li><a href="./Core/">NewModule</a>(module : ObjectPath) </li>
+<li><a href="./Core/">ModuleRemoved</a>(module : ObjectPath) </li>
+<li><a href="./Core/">NewClient</a>(client : ObjectPath) </li>
+<li><a href="./Core/">ClientRemoved</a>(client : ObjectPath) </li>
+<li><a href="./Core/">NewExtension</a>(extension : String) </li>
+<li><a href="./Core/">ExtensionRemoved</a>(extension : String) </li>
+</ul>
+
+<h3 id="memorystatistics">Memory Statistics</h3>
+
+<ul>
+<li>Object <strong>/org/pulseaudio/core1/memstats</strong> implements interface <strong>org.PulseAudio.Core1.Memstats</strong>. </li>
+</ul>
+
+<h4 id="org.pulseaudio.core1.memstats">org.PulseAudio.Core1.Memstats</h4>
+
+<p><a href="./Memstats/">Properties</a>: </p>
+
+<ul>
+<li><a href="./Memstats/">CurrentMemblocks</a> : Uint32 (r) </li>
+<li><a href="./Memstats/">CurrentMemblocksSize</a> : Uint32 (r) </li>
+<li><a href="./Memstats/">AccumulatedMemblocks</a> : Uint32 (r) </li>
+<li><a href="./Memstats/">AccumulatedMemblocksSize</a> : Uint32 (r) </li>
+<li><a href="./Memstats/">SampleCacheSize</a> : Uint32 (r) </li>
+</ul>
+
+<h3 id="cards">Cards</h3>
+
+<ul>
+<li>Objects <strong>/org/pulseaudio/core1/cardX</strong> implement interface <strong>org.PulseAudio.Core1.Card</strong>. </li>
+</ul>
+
+<h4 id="org.pulseaudio.core1.card">org.PulseAudio.Core1.Card</h4>
+
+<p><a href="./Card/">Properties</a>: </p>
+
+<ul>
+<li><a href="./Card/">Index</a> : Uint32 (r) </li>
+<li><a href="./Card/">Name</a> : String (r) </li>
+<li><a href="./Card/">Driver</a> : String (r) </li>
+<li><a href="./Card/">OwnerModule</a> : ObjectPath (r) # Does not exist with all cards. </li>
+<li><a href="./Card/">Sinks</a> : [ObjectPath] (r) </li>
+<li><a href="./Card/">Sources</a> : [ObjectPath] (r) </li>
+<li><a href="./Card/">Profiles</a> : [ObjectPath] (r) </li>
+<li><a href="./Card/">ActiveProfile</a> : ObjectPath (rw) # Does not exist if there are no profiles. </li>
+<li><p><a href="./Card/">PropertyList</a> : {String -> [Byte]} (r) 
+<a href="./Card/">Methods</a>: </p></li>
+<li><p><a href="./Card/">GetProfileByName</a>(in name : String ; out profile : ObjectPath) 
+<a href="./Card/">Signals</a>: </p></li>
+<li><p><a href="./Card/">ActiveProfileUpdated</a>(profile : ObjectPath) </p></li>
+<li><a href="./Card/">NewProfile</a>(profile : ObjectPath) </li>
+<li><a href="./Card/">ProfileRemoved</a>(profile : ObjectPath) </li>
+<li><a href="./Card/">PropertyListUpdated</a>(property_list : {String -> [Byte]}) </li>
+</ul>
+
+<h3 id="cardprofiles">Card Profiles</h3>
+
+<ul>
+<li>Objects <strong>/org/pulseaudio/core1/cardX/profileY</strong> implement interface <strong>org.PulseAudio.Core1.CardProfile</strong>. </li>
+</ul>
+
+<h4 id="org.pulseaudio.core1.cardprofile">org.PulseAudio.Core1.CardProfile</h4>
+
+<p><a href="./CardProfile/">Properties</a>: </p>
+
+<ul>
+<li><a href="./CardProfile/">Index</a> : Uint32 (r) </li>
+<li><a href="./CardProfile/">Name</a> : String (r) </li>
+<li><a href="./CardProfile/">Description</a> : String (r) </li>
+<li><a href="./CardProfile/">Sinks</a> : Uint32 (r) </li>
+<li><a href="./CardProfile/">Sources</a> : Uint32 (r) </li>
+<li><a href="./CardProfile/">Priority</a> : Uint32 (r) </li>
+</ul>
+
+<h3 id="devicessinksandsources">Devices (Sinks and Sources)</h3>
+
+<ul>
+<li>Objects <strong>/org/pulseaudio/core1/sinkX</strong> and <strong>/org/pulseaudio/core1/sourceX</strong> implement interface <strong>org.PulseAudio.Core1.Device</strong>. </li>
+<li>Objects <strong>/org/pulseaudio/core1/sinkX</strong> implement interface <strong>org.PulseAudio.Core1.Sink</strong>. </li>
+<li>Objects <strong>/org/pulseaudio/core1/sourceX</strong> implement interface <strong>org.PulseAudio.Core1.Source</strong>. </li>
+</ul>
+
+<h4 id="org.pulseaudio.core1.device">org.PulseAudio.Core1.Device</h4>
+
+<p><a href="./Device/">Properties</a>: </p>
+
+<ul>
+<li><a href="./Device/">Index</a> : Uint32 (r) </li>
+<li><a href="./Device/">Name</a> : String (r) </li>
+<li><a href="./Device/">Driver</a> : String (r) </li>
+<li><a href="./Device/">OwnerModule</a> : ObjectPath (r) # Does not exist for all devices. </li>
+<li><a href="./Device/">Card</a> : ObjectPath (r) # Does not exist with all devices. </li>
+<li><a href="./Device/">SampleFormat</a> : Uint32 (r) </li>
+<li><a href="./Device/">SampleRate</a> : Uint32 (r) </li>
+<li><a href="./Device/">Channels</a> : [Uint32] (r) </li>
+<li><a href="./Device/">Volume</a> : [Uint32] (rw) </li>
+<li><a href="./Device/">HasFlatVolume</a> : Boolean (r) </li>
+<li><a href="./Device/">HasConvertibleToDecibelVolume</a> : Boolean (r) </li>
+<li><a href="./Device/">BaseVolume</a> : Uint32 (r) </li>
+<li><a href="./Device/">VolumeSteps</a> : Uint32 (r) </li>
+<li><a href="./Device/">Mute</a> : Boolean (rw) </li>
+<li><a href="./Device/">HasHardwareVolume</a> : Boolean (r) </li>
+<li><a href="./Device/">HasHardwareMute</a> : Boolean (r) </li>
+<li><a href="./Device/">ConfiguredLatency</a> : Uint64 # usec </li>
+<li><a href="./Device/">HasDynamicLatency</a> : Boolean (r) </li>
+<li><a href="./Device/">Latency</a> : Uint64 (r) # usec, does not exist with all devices. </li>
+<li><a href="./Device/">IsHardwareDevice</a> : Boolean (r) </li>
+<li><a href="./Device/">IsNetworkDevice</a> : Boolean (r) </li>
+<li><a href="./Device/">State</a> : Uint32 (r) </li>
+<li><a href="./Device/">Ports</a> : [ObjectPath] (r) </li>
+<li><a href="./Device/">ActivePort</a> : ObjectPath (rw) # Does not exist if there are no ports. </li>
+<li><p><a href="./Device/">PropertyList</a> : {String -> [Byte]} (r) 
+<a href="./Device/">Methods</a>: </p></li>
+<li><p><a href="./Device/">Suspend</a>(in suspend : Boolean) </p></li>
+<li><p><a href="./Device/">GetPortByName</a>(in name : String ; out port : ObjectPath) 
+<a href="./Device/">Signals</a>: </p></li>
+<li><p><a href="./Device/">VolumeUpdated</a>(volume : [Uint32]) </p></li>
+<li><a href="./Device/">MuteUpdated</a>(muted : Boolean) </li>
+<li><a href="./Device/">StateUpdated</a>(state : Uint32) </li>
+<li><a href="./Device/">ActivePortUpdated</a>(port : ObjectPath) </li>
+<li><a href="./Device/">PropertyListUpdated</a>(property_list : {String -> [Byte]}) </li>
+</ul>
+
+<h4 id="org.pulseaudio.core1.sink">org.PulseAudio.Core1.Sink</h4>
+
+<p><a href="./Device/">Properties</a>: </p>
+
+<ul>
+<li><a href="./Device/">MonitorSource</a> : ObjectPath (r) </li>
+</ul>
+
+<h4 id="org.pulseaudio.core1.source">org.PulseAudio.Core1.Source</h4>
+
+<p><a href="./Device/">Properties</a>: </p>
+
+<ul>
+<li><a href="./Device/">MonitorOfSink</a> : ObjectPath (r) # Does not exist if this is not a monitor source. </li>
+</ul>
+
+<h3 id="deviceports">Device Ports</h3>
+
+<ul>
+<li>Objects <strong>/org/pulseaudio/core1/sinkX/portY</strong> and <strong>/org/pulseaudio/core1/sourceX/portY</strong> implement interface <strong>org.PulseAudio.Core1.DevicePort</strong>. </li>
+</ul>
+
+<h4 id="org.pulseaudio.core1.deviceport">org.PulseAudio.Core1.DevicePort</h4>
+
+<p><a href="./DevicePort/">Properties</a>: </p>
+
+<ul>
+<li><a href="./DevicePort/">Index</a> : Uint32 (r) </li>
+<li><a href="./DevicePort/">Name</a> : String (r) </li>
+<li><a href="./DevicePort/">Description</a> : String (r) </li>
+<li><a href="./DevicePort/">Priority</a> : Uint32 (r) </li>
+</ul>
+
+<h3 id="streams">Streams</h3>
+
+<ul>
+<li>Objects <strong>/org/pulseaudio/core1/playback_streamX</strong> and <strong>/org/pulseaudio/core1/record_streamX</strong> implement interface <strong>org.PulseAudio.Core1.Stream</strong>. </li>
+</ul>
+
+<h4 id="org.pulseaudio.core1.stream">org.PulseAudio.Core1.Stream</h4>
+
+<p><a href="./Stream/">Properties</a>: </p>
+
+<ul>
+<li><a href="./Stream/">Index</a> : Uint32 (r) </li>
+<li><a href="./Stream/">Driver</a> : String (r) </li>
+<li><a href="./Stream/">OwnerModule</a> : ObjectPath (r) # Does not exist with all streams. </li>
+<li><a href="./Stream/">Client</a> : ObjectPath (r) # Does not exist with all streams. </li>
+<li><a href="./Stream/">Device</a> : ObjectPath (r) </li>
+<li><a href="./Stream/">SampleFormat</a> : Uint32 (r) </li>
+<li><a href="./Stream/">SampleRate</a> : Uint32 (r) </li>
+<li><a href="./Stream/">Channels</a> : [Uint32] (r) </li>
+<li><a href="./Stream/">Volume</a> : [Uint32] (rw) </li>
+<li><a href="./Stream/">VolumeWritable</a> : Boolean (r) </li>
+<li><a href="./Stream/">Mute</a> : Boolean (rw) </li>
+<li><a href="./Stream/">BufferLatency</a> : Uint64 (r) # usec </li>
+<li><a href="./Stream/">DeviceLatency</a> : Uint64 (r) # usec </li>
+<li><a href="./Stream/">ResampleMethod</a> : String (r) </li>
+<li><p><a href="./Stream/">PropertyList</a> : {String -> [Byte]} (r) 
+<a href="./Stream/">Methods</a>: </p></li>
+<li><p><a href="./Stream/">Move</a>(in device : ObjectPath) </p></li>
+<li><p><a href="./Stream/">Kill</a>() 
+<a href="./Stream/">Signals</a>: </p></li>
+<li><p><a href="./Stream/">DeviceUpdated</a>(device : ObjectPath) </p></li>
+<li><a href="./Stream/">SampleRateUpdated</a>(sample_rate : Uint32) </li>
+<li><a href="./Stream/">VolumeUpdated</a>(volume : [Uint32]) </li>
+<li><a href="./Stream/">MuteUpdated</a>(muted : Boolean) </li>
+<li><a href="./Stream/">PropertyListUpdated</a>(property_list : {String -> [Byte]}) </li>
+<li><a href="./Stream/">StreamEvent</a>(name : String, property_list : {String -> [Byte]}) </li>
+</ul>
+
+<h3 id="samples">Samples</h3>
+
+<ul>
+<li>Objects <strong>/org/pulseaudio/core1/sampleX</strong> implement interface <strong>org.PulseAudio.Core1.Sample</strong>. </li>
+</ul>
+
+<h4 id="org.pulseaudio.core1.sample">org.PulseAudio.Core1.Sample</h4>
+
+<p><a href="./Sample/">Properties</a>: </p>
+
+<ul>
+<li><a href="./Sample/">Index</a> : Uint32 (r) </li>
+<li><a href="./Sample/">Name</a> : String (r) </li>
+<li><a href="./Sample/">SampleFormat</a> : Uint32 (r) # Does not exist with all samples. </li>
+<li><a href="./Sample/">SampleRate</a> : Uint32 (r) # Does not exist with all samples. </li>
+<li><a href="./Sample/">Channels</a> : [Uint32] (r) # Does not exist with all samples. </li>
+<li><a href="./Sample/">DefaultVolume</a> : [Uint32] (r) # Does not exist with all samples. </li>
+<li><a href="./Sample/">Duration</a> : Uint64 (r) # usec, does not exist with all samples. </li>
+<li><a href="./Sample/">Bytes</a> : Uint32 (r) # Does not exist with all samples. </li>
+<li><p><a href="./Sample/">PropertyList</a> : {String -> [Byte]} (r) 
+<a href="./Sample/">Methods</a>: </p></li>
+<li><p><a href="./Sample/">Play</a>(in volume : Uint32, property_list : {String -> [Byte]}) </p></li>
+<li><a href="./Sample/">PlayToSink</a>(in sink : ObjectPath, volume : Uint32, property_list : {String -> [Byte]}) </li>
+<li><p><a href="./Sample/">Remove</a>() 
+<a href="./Sample/">Signals</a>: </p></li>
+<li><p><a href="./Sample/">PropertyListUpdated</a>(property_list : {String -> [Byte]}) </p></li>
+</ul>
+
+<h3 id="modules">Modules</h3>
+
+<ul>
+<li>Objects <strong>/org/pulseaudio/core1/moduleX</strong> implement interface <strong>org.PulseAudio.Core1.Module</strong>. </li>
+</ul>
+
+<h4 id="org.pulseaudio.core1.module">org.PulseAudio.Core1.Module</h4>
+
+<p><a href="./Module/">Properties</a>: </p>
+
+<ul>
+<li><a href="./Module/">Index</a> : Uint32 (r) </li>
+<li><a href="./Module/">Name</a> : String (r) </li>
+<li><a href="./Module/">Arguments</a> : {String -> String} (r) </li>
+<li><a href="./Module/">UsageCounter</a> : Uint32 (r) # Does not exist with all modules. </li>
+<li><p><a href="./Module/">PropertyList</a> : {String -> [Byte]} (r) 
+<a href="./Module/">Methods</a>: </p></li>
+<li><p><a href="./Module/">Unload</a>() 
+<a href="./Module/">Signals</a>: </p></li>
+<li><p><a href="./Module/">PropertyListUpdated</a>(property_list : {String -> [Byte]}) </p></li>
+</ul>
+
+<h3 id="clients">Clients</h3>
+
+<ul>
+<li>Objects <strong>/org/pulseaudio/core1/clientX</strong> implement interface <strong>org.PulseAudio.Core1.Client</strong>. </li>
+</ul>
+
+<h4 id="org.pulseaudio.core1.client">org.PulseAudio.Core1.Client</h4>
+
+<p><a href="./Client/">Properties</a>: </p>
+
+<ul>
+<li><a href="./Client/">Index</a> : Uint32 (r) </li>
+<li><a href="./Client/">Driver</a> : String (r) </li>
+<li><a href="./Client/">OwnerModule</a> : ObjectPath (r) # Does not exist with all clients. </li>
+<li><a href="./Client/">PlaybackStreams</a> : [ObjectPath] (r) </li>
+<li><a href="./Client/">RecordStreams</a> : [ObjectPath] (r) </li>
+<li><p><a href="./Client/">PropertyList</a> : {String -> [Byte]} (r) 
+<a href="./Client/">Methods</a>: </p></li>
+<li><p><a href="./Client/">Kill</a>() </p></li>
+<li><a href="./Client/">UpdateProperties</a>(in property_list : {String -> [Byte]}, update_mode : Uint32) </li>
+<li><p><a href="./Client/">RemoveProperties</a>(in keys : [String]) 
+<a href="./Client/">Signals</a>: </p></li>
+<li><p><a href="./Client/">PropertyListUpdated</a>(property_list : {String -> [Byte]}) </p></li>
+<li><a href="./Client/">ClientEvent</a>(name : String, property_list : {String -> [Byte]}) </li>
+</ul>
+
+<h3 id="streamrestoreextension">Stream Restore Extension</h3>
+
+<ul>
+<li>Object <strong>/org/pulseaudio/stream_restore1</strong> implements interface <strong>org.PulseAudio.Ext.StreamRestore1</strong>. </li>
+<li>Objects <strong>/org/pulseaudio/stream_restore1/entryX</strong> implement interface <strong>org.PulseAudio.Ext.StreamRestore1.RestoreEntry</strong>. </li>
+</ul>
+
+<h4 id="org.pulseaudio.ext.streamrestore1">org.PulseAudio.Ext.StreamRestore1</h4>
+
+<p><a href="./StreamRestore/">Properties</a>: </p>
+
+<ul>
+<li><a href="./StreamRestore/">InterfaceRevision</a> : Uint32 (r) </li>
+<li><p><a href="./StreamRestore/">Entries</a> : [ObjectPath] (r) 
+<a href="./StreamRestore/">Methods</a>: </p></li>
+<li><p><a href="./StreamRestore/">AddEntry</a>(in name : String, device : String, volume : [(Uint32, Uint32)], mute : Boolean, apply_immediately : Boolean ; out entry : ObjectPath) </p></li>
+<li><p><a href="./StreamRestore/">GetEntryByName</a>(in name : String ; out entry : ObjectPath) 
+<a href="./StreamRestore/">Signals</a>: </p></li>
+<li><p><a href="./StreamRestore/">NewEntry</a>(entry : ObjectPath) </p></li>
+<li><a href="./StreamRestore/">EntryRemoved</a>(entry : ObjectPath) </li>
+</ul>
+
+<h4 id="org.pulseaudio.ext.streamrestore1.restoreentry">org.PulseAudio.Ext.StreamRestore1.RestoreEntry</h4>
+
+<p><a href="./StreamRestore/">Properties</a>: </p>
+
+<ul>
+<li><a href="./StreamRestore/">Index</a> : Uint32 (r) </li>
+<li><a href="./StreamRestore/">Name</a> : String (r) </li>
+<li><a href="./StreamRestore/">Device</a> : String (rw) </li>
+<li><a href="./StreamRestore/">Volume</a> : [(Uint32, Uint32)] (rw) </li>
+<li><p><a href="./StreamRestore/">Mute</a> : Boolean (rw) 
+<a href="./StreamRestore/">Methods</a>: </p></li>
+<li><p><a href="./StreamRestore/">Remove</a>() 
+<a href="./StreamRestore/">Signals</a>: </p></li>
+<li><p><a href="./StreamRestore/">DeviceUpdated</a>(device : String) </p></li>
+<li><a href="./StreamRestore/">VolumeUpdated</a>(volume : [(Uint32, Uint32)]) </li>
+<li><a href="./StreamRestore/">MuteUpdated</a>(muted : Boolean) </li>
+</ul>
+
+<h3 id="ladspaextension">Ladspa Extension</h3>
+
+<ul>
+<li>Objects <strong>/org/pulseaudio/core1/sinkX</strong>, where X is the index of a ladspa sink, implement interface <strong>org.PulseAudio.Ext.Ladspa1</strong>. </li>
+</ul>
+
+<h4 id="org.pulseaudio.ext.ladspa1">org.PulseAudio.Ext.Ladspa1</h4>
+
+<p><a href="./Ladspa/">Properties</a>: </p>
+
+<ul>
+<li><a href="./Ladspa/">AlgorithmParameters</a> : ([Double], [Boolean]) (rw) </li>
+</ul>
+
+<h3 id="enumerations">Enumerations</h3>
+
+<ul>
+<li><a href="./Enumerations/">Sample formats</a> </li>
+<li><a href="./Enumerations/">Channel positions</a> </li>
+<li><a href="./Enumerations/">Device states</a> </li>
+<li><a href="./Enumerations/">Update modes</a> </li>
+</ul>
+
+<h3 id="errors">Errors</h3>
+
+<ul>
+<li><a href="./Errors/">org.PulseAudio.Core1.NotFoundError</a> </li>
+<li><a href="./Errors/">org.PulseAudio.Core1.NoSuchPropertyError</a> </li>
+<li><a href="./Errors/">org.PulseAudio.Core1.BadStateError</a> </li>
+</ul>
+
+</div>
+
+
+
+
+
+</div>
+
+<div id="footer" class="pagefooter">
+
+<div id="pageinfo">
+
+
+
+
+
+
+<div id="backlinks">
+Links:
+
+<a href="./Card/">DBus/Card</a>
+
+<a href="./CardProfile/">DBus/CardProfile</a>
+
+<a href="./Client/">DBus/Client</a>
+
+<a href="./ConnectingToServer/">DBus/ConnectingToServer</a>
+
+<a href="./Core/">DBus/Core</a>
+
+<a href="./Device/">DBus/Device</a>
+
+<a href="./DevicePort/">DBus/DevicePort</a>
+
+<a href="./Enumerations/">DBus/Enumerations</a>
+
+<a href="./Errors/">DBus/Errors</a>
+
+<a href="./Ladspa/">DBus/Ladspa</a>
+
+
+<span class="popup">...
+<span class="balloon">
+
+<a href="./Memstats/">DBus/Memstats</a>
+
+<a href="./Module/">DBus/Module</a>
+
+<a href="./Sample/">DBus/Sample</a>
+
+<a href="./Stream/">DBus/Stream</a>
+
+<a href="./StreamRestore/">DBus/StreamRestore</a>
+
+<a href="../../../../Ideas/">Ideas</a>
+
+</span>
+</span>
+
+</div>
+
+
+
+
+
+
+<div class="pagedate">
+Last edited <span class="date">Wed Jul 17 20:56:26 2013</span>
+<!-- Created <span class="date">Sat May 18 10:32:49 2013</span> -->
+</div>
+
+</div>
+
+
+<!-- from www -->
+</div>
+
+</div>
+
+</body>
+</html>

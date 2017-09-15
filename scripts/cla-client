@@ -1,0 +1,41 @@
+#!/usr/bin/perl -w
+
+use UniLang::Util::TempAgent;
+
+use File::Temp;
+use IO::File;
+
+my @links;
+foreach my $arg (@ARGV) {
+  if ($arg =~ /^(https?|ftp|file):\/\/(\S+)$/) {
+    # read it
+    push @links, $arg;
+  } else {
+    # write it to a temp file and have it read
+    my $fh = File::Temp->new
+      (
+       DIR => "$ENV{HOME}/.frdcsa/clear/readings/",
+       SUFFIX => '.txt',
+      );
+    my $filename = $fh->filename;
+    undef $fh;
+    my $file = IO::File->new;
+    $file->open(">$filename") or die "Cannot open $filename\n";
+    print $file $arg;
+    $file->close;
+    push @links, "file://".$filename;
+  }
+}
+
+my $tempagent = UniLang::Util::TempAgent->new;
+
+foreach my $link (@links) {
+  $tempagent->Send
+    (
+     Receiver => "CLEAR",
+     Contents => "queue $link",
+     Data => {
+	      _DoNotLog => 1,
+	     },
+    );
+}

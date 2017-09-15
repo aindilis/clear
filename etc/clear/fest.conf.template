@@ -1,0 +1,3 @@
+(set! server_access_list '("localhost" "frdcsa"))
+
+(Parameter.set 'Duration_Stretch <DURATION>)

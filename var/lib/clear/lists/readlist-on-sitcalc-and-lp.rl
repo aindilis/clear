@@ -1,0 +1,17 @@
+/home/andrewdo/3557-16388-1-PB.pdf
+/home/andrewdo/79e4150b13334e728b.pdf
+/home/andrewdo/aamas2008.pdf
+/home/andrewdo/AUTHOR_SLIDES_MAS_2nd_chapter14_animated.pdf
+/home/andrewdo/clima02_procs.pdf
+/home/andrewdo/Downloads/3557-16388-1-PB.pdf
+/home/andrewdo/Downloads/CR12.pdf
+/home/andrewdo/Downloads/ECAI12.pdf
+/home/andrewdo/Downloads/LTLforPlanningLanguages.pdf
+/home/andrewdo/Downloads/NMR12.pdf
+/home/andrewdo/Downloads/prasa08-08.pdf
+/home/andrewdo/independent-choice-logic.pdf
+/home/andrewdo/kelly2008.pdf
+/home/andrewdo/Liu_rochester_0188E_10375.pdf
+/home/andrewdo/reasoningTR(1).pdf
+/home/andrewdo/reasoningTR.pdf
+/home/andrewdo/thediss.pdf

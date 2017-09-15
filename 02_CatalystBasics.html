@@ -1,0 +1,1469 @@
+
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+        <title>Catalyst::Manual::Tutorial::02_CatalystBasics - Catalyst Tutorial - Chapter 2: Catalyst Application Development Basics - metacpan.org</title>
+        <link rel="alternate" type="application/rss+xml" title="RSS" href="https://metacpan.org/feed/distribution/Catalyst-Manual" />
+        <link href="/_assets/3f06b75c8b1074bfd6e5e9ad7777a91e.css" rel="stylesheet" type="text/css">
+        <link rel="search" href="/static/opensearch.xml" type="application/opensearchdescription+xml" title="MetaCPAN">
+        <link rel="canonical" href="https://metacpan.org/pod/distribution/Catalyst-Manual/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod" />
+        <meta name="description" content="Catalyst Tutorial - Chapter 2: Catalyst Application Development Basics" />
+        <link rel="shortcut icon" href="/static/icons/favicon.ico">
+        <link rel="apple-touch-icon" sizes="152x152" href="/static/icons/apple-touch-icon.png">
+        <script src="/_assets/edf9b50f583fc73ab25d80f7f40d549e.js" type="text/javascript"></script>
+        <script>
+          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+          })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+          ga('create', 'UA-27829474-1', {
+              siteSpeedSampleRate : 100
+          });
+          ga('send', 'pageview');
+
+          ga(function() {
+            var cookies=['__utma', '__utmb', '__utmc', '__utmv', '__utmz', '_gat'];
+            for (var i = cookies.length; i--; ) {
+              var cookie = cookies[i]+"=; expires="+(new Date(0)).toGMTString()+"; path=/";
+              document.cookie = cookie;
+              document.cookie = cookie + '; domain=.'+document.domain;
+            }
+          });
+        </script>
+        
+        
+        <meta name="twitter:card"        content="summary" />
+<meta name="twitter:url"         content="https://metacpan.org/pod/distribution/Catalyst-Manual/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod" />
+<meta name="twitter:title"       content="Catalyst::Manual::Tutorial::02_CatalystBasics" />
+<meta name="twitter:description" content="Catalyst Tutorial - Chapter 2: Catalyst Application Development Basics" />
+<meta name="twitter:site"        content="metacpan" />
+
+        
+    </head>
+    <body>
+        <nav class="navbar navbar-default" role="navigation">
+            <div class="container-fluid">
+                <ul class="nav navbar-nav">
+                <li class="visible-xs">
+                <a href="#" data-toggle="slidepanel" data-target=".slidepanel">
+                  <i class="fa fa-bars fa-2x icon-slidepanel"></i>
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                </a>
+                </li>
+            
+                    <li class="">
+                        <a href="/"><img src="/static/icons/metacpan-icon.png" />                            Home                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/recent"><i class="fa fa-history"></i>                            Recent                        </a>
+                    </li>
+                    <li class="hidden-xs">
+                        <a href="/about/faq"><i class="fa fa-question"></i>                            FAQ                        </a>
+                    </li>
+                    <li class="hidden-xs">
+                        <a href="https://github.com/CPAN-API/metacpan-web/issues"><i class="fa fa-github-alt"></i>                            Github Issues                        </a>
+                    </li>
+                    <li class="hidden-xs">
+                        <a href="/news"><i class="fa fa-rss"></i>                            News                        </a>
+                    </li>
+                    <li class="hidden-xs">
+                        <a href="/lab"><i class="fa fa-rocket"></i>                            Lab                        </a>
+                    </li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <form action="https://metacpan.org/account/logout" method="POST" id="metacpan-logout"></form>
+                    <li class="dropdown logged_in" style="display: none;">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                        Account
+                        <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/account/identities">Identities</a></li>
+                            <li><a href="/account/profile">Profile</a></li>
+                            <li><a href="/account/favorite/list">Favorites</a></li>
+                            <li>
+                                <a href="#" onclick="$('#metacpan-logout').submit(); return false">Logout</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="dropdown logged_out" style="display: none;">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                        Sign in
+                        <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="https://api.metacpan.org/oauth2/authorize?client_id=metacpan.org&amp;choice=facebook" onclick="return logInPAUSE(this)">
+                                <i class="fa fa-facebook fa-fw"></i>
+                                Facebook
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://api.metacpan.org/oauth2/authorize?client_id=metacpan.org&amp;choice=github" onclick="return logInPAUSE(this)">
+                                <i class="fa fa-github fa-fw"></i>
+                                GitHub
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://api.metacpan.org/oauth2/authorize?client_id=metacpan.org&amp;choice=twitter" onclick="return logInPAUSE(this)">
+                                <i class="fa fa-twitter fa-fw"></i>
+                                Twitter
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://api.metacpan.org/oauth2/authorize?client_id=metacpan.org&amp;choice=google" onclick="return logInPAUSE(this)">
+                                <i class="fa fa-google fa-fw"></i>
+                                Google
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/login/openid">
+                                <i class="fa fa-openid fa-fw"></i>
+                                OpenID
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <div class="container-fluid">
+
+        
+
+            
+            <div class="row hidden-phone">
+                <div class="head-small-logo col-md-3">
+                    <a href="/" class="small-logo"></a>
+                </div>
+                <div class="col-md-9">
+                    <form action="/search" class="search-form form-horizontal">
+                        <div class="form-group">
+                            <div class="input-group">
+                                <input type="text" name="q" size="41" id="search-input" class="form-control" value="">
+                                <span class="input-group-btn">
+                                    <button class="btn search-btn" type="submit">Search</button>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-group search-type">
+                            <label class="radio-inline">
+                                <input type="radio" name="search_type" value="modules" checked 
+                                >
+                                Modules
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="search_type" value="authors"
+                                >
+                                Authors
+                            </label>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+
+            <div class="row">
+                <div class="main-content col-md-12">
+                    
+
+
+
+
+
+
+
+<div class="breadcrumbs" itemscope itemtype="http://schema.org/SoftwareApplication">
+  <a data-keyboard-shortcut="g a" rel="author" itemprop="author" itemscope itemtype="http://schema.org/Person" href="/author/ETHER" title="" class="author-name">Karen Etheridge 🐾 🌋</a>
+  <span>&nbsp;/&nbsp;</span>
+  <div class="release status-latest maturity-released">
+    <span class="dropdown"><b class="caret"></b></span>
+    <select class="" onchange="document.location.href=this.value">
+
+  <option selected value="/module/ETHER/Catalyst-Manual-5.9009/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.9009
+      (ETHER on 2014-12-13)
+      
+  </option>
+
+  <option  value="/module/ETHER/Catalyst-Manual-5.9008/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.9008
+      (ETHER on 2014-07-26)
+      
+  </option>
+
+  <option  value="/module/HKCLARK/Catalyst-Manual-5.9006/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.9006
+      (HKCLARK on 2012-11-08)
+      
+  </option>
+
+  <option  value="/module/ZARQUON/Catalyst-Manual-5.9005/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.9005
+      (ZARQUON on 2012-11-01)
+      
+  </option>
+
+  <option  value="/module/BOBTFISH/Catalyst-Manual-5.9003/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.9003
+      (BOBTFISH on 2012-02-17)
+      
+  </option>
+
+  <option  value="/module/HKCLARK/Catalyst-Manual-5.9002/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.9002
+      (HKCLARK on 2011-09-03)
+      
+  </option>
+
+  <option  value="/module/HKCLARK/Catalyst-Manual-5.9001/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.9001
+      (HKCLARK on 2011-09-03)
+      
+  </option>
+
+  <option  value="/module/BOBTFISH/Catalyst-Manual-5.9000/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.9000
+      (BOBTFISH on 2011-08-16)
+      
+  </option>
+
+  <option  value="/module/BOBTFISH/Catalyst-Manual-5.8901-TRIAL/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.8901 DEV
+      (BOBTFISH on 2011-08-07)
+      
+  </option>
+
+  <option  value="/module/BOBTFISH/Catalyst-Manual-5.8008/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.8008
+      (BOBTFISH on 2011-08-02)
+      
+  </option>
+
+  <option  value="/module/BOBTFISH/Catalyst-Manual-5.8007/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.8007
+      (BOBTFISH on 2011-04-29)
+      
+  </option>
+
+  <option  value="/module/BOBTFISH/Catalyst-Manual-5.8006/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.8006
+      (BOBTFISH on 2011-04-29)
+      
+  </option>
+
+  <option  value="/module/HKCLARK/Catalyst-Manual-5.8004/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.8004
+      (HKCLARK on 2010-02-17)
+      
+  </option>
+
+  <option  value="/module/HKCLARK/Catalyst-Manual-5.7021/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.7021
+      (HKCLARK on 2009-05-08)
+      
+  </option>
+        <optgroup label="BackPAN">
+          
+
+  <option  value="/module/ETHER/Catalyst-Manual-5.9007/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.9007
+      (ETHER on 2013-05-06)
+      
+  </option>
+
+  <option  value="/module/ZARQUON/Catalyst-Manual-5.9004/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.9004
+      (ZARQUON on 2012-05-03)
+      
+  </option>
+
+  <option  value="/module/ZARQUON/Catalyst-Manual-5.8005/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.8005
+      (ZARQUON on 2010-10-29)
+      
+  </option>
+
+  <option  value="/module/HKCLARK/Catalyst-Manual-5.8003/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.8003
+      (HKCLARK on 2009-12-28)
+      
+  </option>
+
+  <option  value="/module/HKCLARK/Catalyst-Manual-5.8002/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.8002
+      (HKCLARK on 2009-11-15)
+      
+  </option>
+
+  <option  value="/module/HKCLARK/Catalyst-Manual-5.8001/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.8001
+      (HKCLARK on 2009-10-07)
+      
+  </option>
+
+  <option  value="/module/HKCLARK/Catalyst-Manual-5.8000/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.8000
+      (HKCLARK on 2009-05-27)
+      
+  </option>
+
+  <option  value="/module/HKCLARK/Catalyst-Manual-5.7020/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.7015
+      (HKCLARK on 2009-03-12)
+      
+  </option>
+
+  <option  value="/module/HKCLARK/Catalyst-Manual-5.7019/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.7015
+      (HKCLARK on 2009-03-11)
+      
+  </option>
+
+  <option  value="/module/HKCLARK/Catalyst-Manual-5.7018/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.7015
+      (HKCLARK on 2009-03-09)
+      
+  </option>
+
+  <option  value="/module/HKCLARK/Catalyst-Manual-5.7017/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.7015
+      (HKCLARK on 2009-02-28)
+      
+  </option>
+
+  <option  value="/module/HKCLARK/Catalyst-Manual-5.7016/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.7015
+      (HKCLARK on 2008-12-29)
+      
+  </option>
+
+  <option  value="/module/HKCLARK/Catalyst-Manual-5.7015/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.7015
+      (HKCLARK on 2008-12-18)
+      
+  </option>
+
+  <option  value="/module/RJBS/Catalyst-Manual-5.7014/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.7014
+      (RJBS on 2008-11-04)
+      
+  </option>
+
+  <option  value="/module/ZARQUON/Catalyst-Manual-5.7013/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.7013
+      (ZARQUON on 2008-07-09)
+      
+  </option>
+
+  <option  value="/module/ZARQUON/Catalyst-Manual-5.7012/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.7012
+      (ZARQUON on 2008-06-03)
+      
+  </option>
+
+  <option  value="/module/ZARQUON/Catalyst-Manual-5.7011/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.7011
+      (ZARQUON on 2008-05-16)
+      
+  </option>
+
+  <option  value="/module/MSTROUT/Catalyst-Manual-5.701004/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.701004
+      (MSTROUT on 2008-04-09)
+      
+  </option>
+
+  <option  value="/module/JROCKWAY/Catalyst-Manual-5.701003/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.701003
+      (JROCKWAY on 2007-10-07)
+      
+  </option>
+
+  <option  value="/module/JROCKWAY/Catalyst-Manual-5.701002/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.701001
+      (JROCKWAY on 2007-08-28)
+      
+  </option>
+
+  <option  value="/module/JROCKWAY/Catalyst-Manual-5.701001/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.701001
+      (JROCKWAY on 2007-08-24)
+      
+  </option>
+
+  <option  value="/module/JROCKWAY/Catalyst-Manual-5.700704/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.700704
+      (JROCKWAY on 2007-08-08)
+      
+  </option>
+
+  <option  value="/module/JROCKWAY/Catalyst-Manual-5.700701/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.700701
+      (JROCKWAY on 2007-04-19)
+      
+  </option>
+
+  <option  value="/module/JROCKWAY/Catalyst-Manual-5.700501/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.700501
+      (JROCKWAY on 2006-11-10)
+      
+  </option>
+
+  <option  value="/module/JROCKWAY/Catalyst-Manual-5.700401/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">
+    5.700401
+      (JROCKWAY on 2006-11-07)
+      
+  </option>
+        </optgroup>
+    
+</select>
+    
+    <a data-keyboard-shortcut="g d" class="release-name" itemprop="name" href="/release/Catalyst-Manual">Catalyst-Manual-5.9009</a>
+    
+    
+  </div>
+  <div class="inline"><script type="text/javascript">
+  MetaCPAN.favs_to_check['Catalyst-Manual'] = 1;
+</script>
+
+<div id="Catalyst-Manual-fav" class="logged_in">
+<form action="/account/favorite/add" style="display: inline" onsubmit="return favDistribution(this)">
+    <input type="hidden" name="remove" value="0">
+    <input type="hidden" name="release" value="Catalyst-Manual-5.9009">
+    <input type="hidden" name="author" value="ETHER">
+    <input type="hidden" name="distribution" value="Catalyst-Manual">
+    <button type="submit" class="favorite highlight"><span>39</span> ++</button>
+</form>
+</div>
+<div class="logged_out">
+<a href="" onclick="alert('Please sign in to add favorites'); return false" class="favorite highlight">
+<span>39</span> ++</a>
+</div>
+</div>
+  <span>&nbsp;/&nbsp;
+  Catalyst::Manual::Tutorial::02_CatalystBasics</span>
+</div>
+
+
+<ul class="nav-list slidepanel" itemscope itemtype="http://schema.org/SoftwareApplication">
+  <li class="visible-xs">
+    <div>
+    <form action="/search">
+        <input type="search" class="form-control tool-bar-form" placeholder="Search" name="q">
+        <input type="submit" class="hidden">
+    </form>
+</div>
+
+  </li>
+  <li class="nav-header"><span class="relatize">13 Dec 2014 18:22:20 GMT</span></li>
+  
+  <li>
+    <a data-keyboard-shortcut="g s" href="/source/ETHER/Catalyst-Manual-5.9009/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod"><i class="fa fa-fw fa-file-code-o black"></i>Source</a>
+    (<a href="https://api.metacpan.org/source/ETHER/Catalyst-Manual-5.9009/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">raw</a>)
+  </li>
+  <li>
+    <a data-keyboard-shortcut="g b" href="/source/ETHER/Catalyst-Manual-5.9009/lib/Catalyst/Manual/Tutorial"><i class="fa fa-fw fa-folder-open black"></i>Browse</a>
+    (<a href="https://api.metacpan.org/source/ETHER/Catalyst-Manual-5.9009/">raw</a>)
+  </li>
+  <li>
+    <a data-keyboard-shortcut="g c" href="/changes/distribution/Catalyst-Manual"><i class="fa fa-fw fa-cogs black"></i>Changes</a>
+</li>
+
+
+<li>
+    
+    <a data-keyboard-shortcut="g r" href="http://git.shadowcat.co.uk/gitweb/gitweb.cgi?p=catagits/Catalyst-Manual.git"><i class="fa fa-fw fa-code-fork black"></i>Repository</a>
+    
+    
+    (<a href="git://git.shadowcat.co.uk/catagits/Catalyst-Manual.git">git clone</a>)
+    
+</li>
+
+<li>
+    <a data-keyboard-shortcut="g i" href="https://rt.cpan.org/Public/Dist/Display.html?Name=Catalyst-Manual"><i class="fa fa-fw fa-info-circle black"></i>Issues</a>
+    (13)
+</li>
+
+<li>
+    <a href="http://cpanratings.perl.org/rate/?distribution=Catalyst-Manual"><i class="fa fa-fw fa-smile-o black"></i><span class="rating-45"></span></a>
+(<a href="http://cpanratings.perl.org/dist/Catalyst-Manual">3 reviews</a>)
+
+</li>
+
+<li>
+    
+    <a href="http://matrix.cpantesters.org/?dist=Catalyst-Manual+5.9009" title="Matrix"><i class="fa fa-fw fa-check-circle black"></i>Testers</a>
+    <span title="(pass / fail / na)">(<a href="http://www.cpantesters.org/distro/C/Catalyst-Manual.html?oncpan=1&amp;distmat=1&amp;version=5.9009&amp;grade=2" style="color: #090">564</a> / <a href="http://www.cpantesters.org/distro/C/Catalyst-Manual.html?oncpan=1&amp;distmat=1&amp;version=5.9009&amp;grade=3" style="color: #900">0</a> / <a href="http://www.cpantesters.org/distro/C/Catalyst-Manual.html?oncpan=1&amp;distmat=1&amp;version=5.9009&amp;grade=4">0</a>)</span>
+</li>
+<li>
+    <a href="http://cpants.charsbar.org/dist/overview/Catalyst-Manual"><i class="fa fa-fw fa-line-chart black"></i>Kwalitee</a>
+</li>
+
+<li><i class="fa fa-fw fa-gavel black"></i>License: perl_5</li>
+
+
+
+
+  <li class="nav-header">Activity</li>
+  <li><div class="activity-graph">
+  <img src="/activity?res=month&amp;distribution=Catalyst-Manual" width="170" height="22" />
+  <div align="right"><small class="comment">24 month</small></div>
+</div>
+</li>
+  <li class="nav-header">Tools</li>
+<li>
+    <i class="fa fa-file fa-fw black"></i><a href="http://perlybook.org/?source=Catalyst::Manual::Tutorial::02_CatalystBasics&amp;book_selection=&amp;target=mobi" title="Download POD of this module in .mobi format for Kindle.">MOBI</a> | <a href="http://perlybook.org/?source=Catalyst::Manual::Tutorial::02_CatalystBasics&amp;book_selection=&amp;target=epub" title="Download POD of this module in .epub format for E-book readers.">EPUB</a></li>
+
+<li>
+    <a href="https://cpan.metacpan.org/authors/id/E/ET/ETHER/Catalyst-Manual-5.9009.tar.gz">
+    <i class="fa fa-download fa-fw black"></i>Download (162.82Kb)
+    </a>
+</li>
+<li>
+    <a href="https://explorer.metacpan.org/?url=%2Fmodule%2FETHER%2FCatalyst-Manual-5.9009%2Flib%2FCatalyst%2FManual%2FTutorial%2F02_CatalystBasics.pod">
+    <i class="fa fa-list-alt fa-fw black"></i>MetaCPAN Explorer
+    </a>
+</li>
+<li>
+    <a href="http://cpanratings.perl.org/rate/?distribution=Catalyst-Manual">
+    <i class="fa fa-star fa-fw black"></i>Rate this distribution
+    </a>
+</li>
+<li>
+    <a href="/feed/distribution/Catalyst-Manual">
+    <i class="fa fa-rss-square fa-fw black"></i>Subscribe to distribution
+    </a>
+</li>
+<li>
+    <button class="btn btn-link" data-toggle="modal" data-target="#install-instructions-dialog">
+      <i class="fa fa-terminal fa-fw black"></i>Install Instructions
+    </button>
+</li>
+<li>
+    <form action="/search">
+        <input type="hidden" name="q" value="dist:Catalyst-Manual">
+        <input type="search" name="q" placeholder="Search distribution" style="width: 153px" class="form-control tool-bar-form">
+        <input type="submit" style="display: none">
+    </form>
+</li>
+<li>
+    <select onchange="document.location.href='/module/'+this.value" class="form-control tool-bar-form">
+        <option>Jump to version</option>
+    <option value="ETHER/Catalyst-Manual-5.9008/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.9008 (ETHER on 2014-07-26)</option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.9006/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.9006 (HKCLARK on 2012-11-08)</option>
+
+    <option value="ZARQUON/Catalyst-Manual-5.9005/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.9005 (ZARQUON on 2012-11-01)</option>
+
+    <option value="BOBTFISH/Catalyst-Manual-5.9003/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.9003 (BOBTFISH on 2012-02-17)</option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.9002/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.9002 (HKCLARK on 2011-09-03)</option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.9001/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.9001 (HKCLARK on 2011-09-03)</option>
+
+    <option value="BOBTFISH/Catalyst-Manual-5.9000/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.9000 (BOBTFISH on 2011-08-16)</option>
+
+    <option value="BOBTFISH/Catalyst-Manual-5.8901-TRIAL/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.8901 DEV (BOBTFISH on 2011-08-07)</option>
+
+    <option value="BOBTFISH/Catalyst-Manual-5.8008/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.8008 (BOBTFISH on 2011-08-02)</option>
+
+    <option value="BOBTFISH/Catalyst-Manual-5.8007/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.8007 (BOBTFISH on 2011-04-29)</option>
+
+    <option value="BOBTFISH/Catalyst-Manual-5.8006/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.8006 (BOBTFISH on 2011-04-29)</option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.8004/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.8004 (HKCLARK on 2010-02-17)</option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.7021/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7021 (HKCLARK on 2009-05-08)</option>
+
+<optgroup label="BackPAN"></optgroup>
+
+    <option value="ETHER/Catalyst-Manual-5.9007/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.9007 (ETHER on 2013-05-06)
+    </option>
+
+    <option value="ZARQUON/Catalyst-Manual-5.9004/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.9004 (ZARQUON on 2012-05-03)
+    </option>
+
+    <option value="ZARQUON/Catalyst-Manual-5.8005/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.8005 (ZARQUON on 2010-10-29)
+    </option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.8003/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.8003 (HKCLARK on 2009-12-28)
+    </option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.8002/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.8002 (HKCLARK on 2009-11-15)
+    </option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.8001/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.8001 (HKCLARK on 2009-10-07)
+    </option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.8000/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.8000 (HKCLARK on 2009-05-27)
+    </option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.7020/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7015 (HKCLARK on 2009-03-12)
+    </option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.7019/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7015 (HKCLARK on 2009-03-11)
+    </option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.7018/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7015 (HKCLARK on 2009-03-09)
+    </option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.7017/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7015 (HKCLARK on 2009-02-28)
+    </option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.7016/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7015 (HKCLARK on 2008-12-29)
+    </option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.7015/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7015 (HKCLARK on 2008-12-18)
+    </option>
+
+    <option value="RJBS/Catalyst-Manual-5.7014/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7014 (RJBS on 2008-11-04)
+    </option>
+
+    <option value="ZARQUON/Catalyst-Manual-5.7013/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7013 (ZARQUON on 2008-07-09)
+    </option>
+
+    <option value="ZARQUON/Catalyst-Manual-5.7012/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7012 (ZARQUON on 2008-06-03)
+    </option>
+
+    <option value="ZARQUON/Catalyst-Manual-5.7011/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7011 (ZARQUON on 2008-05-16)
+    </option>
+
+    <option value="MSTROUT/Catalyst-Manual-5.701004/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.701004 (MSTROUT on 2008-04-09)
+    </option>
+
+    <option value="JROCKWAY/Catalyst-Manual-5.701003/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.701003 (JROCKWAY on 2007-10-07)
+    </option>
+
+    <option value="JROCKWAY/Catalyst-Manual-5.701002/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.701001 (JROCKWAY on 2007-08-28)
+    </option>
+
+    <option value="JROCKWAY/Catalyst-Manual-5.701001/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.701001 (JROCKWAY on 2007-08-24)
+    </option>
+
+    <option value="JROCKWAY/Catalyst-Manual-5.700704/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.700704 (JROCKWAY on 2007-08-08)
+    </option>
+
+    <option value="JROCKWAY/Catalyst-Manual-5.700701/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.700701 (JROCKWAY on 2007-04-19)
+    </option>
+
+    <option value="JROCKWAY/Catalyst-Manual-5.700501/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.700501 (JROCKWAY on 2006-11-10)
+    </option>
+
+    <option value="JROCKWAY/Catalyst-Manual-5.700401/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.700401 (JROCKWAY on 2006-11-07)
+    </option>
+
+
+    </select>
+</li>
+<li>
+    <select name="release" onchange="document.location.href='/diff/file/?target=ETHER%2FCatalyst-Manual-5.9009%2Flib%2FCatalyst%2FManual%2FTutorial%2F02_CatalystBasics.pod&amp;source=' + encodeURIComponent(this.value)" class="form-control tool-bar-form">
+        <option>Diff with version</option>
+    <option value="ETHER/Catalyst-Manual-5.9008/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.9008 (ETHER on 2014-07-26)</option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.9006/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.9006 (HKCLARK on 2012-11-08)</option>
+
+    <option value="ZARQUON/Catalyst-Manual-5.9005/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.9005 (ZARQUON on 2012-11-01)</option>
+
+    <option value="BOBTFISH/Catalyst-Manual-5.9003/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.9003 (BOBTFISH on 2012-02-17)</option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.9002/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.9002 (HKCLARK on 2011-09-03)</option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.9001/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.9001 (HKCLARK on 2011-09-03)</option>
+
+    <option value="BOBTFISH/Catalyst-Manual-5.9000/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.9000 (BOBTFISH on 2011-08-16)</option>
+
+    <option value="BOBTFISH/Catalyst-Manual-5.8901-TRIAL/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.8901 DEV (BOBTFISH on 2011-08-07)</option>
+
+    <option value="BOBTFISH/Catalyst-Manual-5.8008/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.8008 (BOBTFISH on 2011-08-02)</option>
+
+    <option value="BOBTFISH/Catalyst-Manual-5.8007/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.8007 (BOBTFISH on 2011-04-29)</option>
+
+    <option value="BOBTFISH/Catalyst-Manual-5.8006/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.8006 (BOBTFISH on 2011-04-29)</option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.8004/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.8004 (HKCLARK on 2010-02-17)</option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.7021/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7021 (HKCLARK on 2009-05-08)</option>
+
+<optgroup label="BackPAN"></optgroup>
+
+    <option value="ETHER/Catalyst-Manual-5.9007/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.9007 (ETHER on 2013-05-06)
+    </option>
+
+    <option value="ZARQUON/Catalyst-Manual-5.9004/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.9004 (ZARQUON on 2012-05-03)
+    </option>
+
+    <option value="ZARQUON/Catalyst-Manual-5.8005/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.8005 (ZARQUON on 2010-10-29)
+    </option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.8003/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.8003 (HKCLARK on 2009-12-28)
+    </option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.8002/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.8002 (HKCLARK on 2009-11-15)
+    </option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.8001/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.8001 (HKCLARK on 2009-10-07)
+    </option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.8000/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.8000 (HKCLARK on 2009-05-27)
+    </option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.7020/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7015 (HKCLARK on 2009-03-12)
+    </option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.7019/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7015 (HKCLARK on 2009-03-11)
+    </option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.7018/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7015 (HKCLARK on 2009-03-09)
+    </option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.7017/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7015 (HKCLARK on 2009-02-28)
+    </option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.7016/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7015 (HKCLARK on 2008-12-29)
+    </option>
+
+    <option value="HKCLARK/Catalyst-Manual-5.7015/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7015 (HKCLARK on 2008-12-18)
+    </option>
+
+    <option value="RJBS/Catalyst-Manual-5.7014/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7014 (RJBS on 2008-11-04)
+    </option>
+
+    <option value="ZARQUON/Catalyst-Manual-5.7013/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7013 (ZARQUON on 2008-07-09)
+    </option>
+
+    <option value="ZARQUON/Catalyst-Manual-5.7012/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7012 (ZARQUON on 2008-06-03)
+    </option>
+
+    <option value="ZARQUON/Catalyst-Manual-5.7011/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.7011 (ZARQUON on 2008-05-16)
+    </option>
+
+    <option value="MSTROUT/Catalyst-Manual-5.701004/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.701004 (MSTROUT on 2008-04-09)
+    </option>
+
+    <option value="JROCKWAY/Catalyst-Manual-5.701003/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.701003 (JROCKWAY on 2007-10-07)
+    </option>
+
+    <option value="JROCKWAY/Catalyst-Manual-5.701002/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.701001 (JROCKWAY on 2007-08-28)
+    </option>
+
+    <option value="JROCKWAY/Catalyst-Manual-5.701001/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.701001 (JROCKWAY on 2007-08-24)
+    </option>
+
+    <option value="JROCKWAY/Catalyst-Manual-5.700704/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.700704 (JROCKWAY on 2007-08-08)
+    </option>
+
+    <option value="JROCKWAY/Catalyst-Manual-5.700701/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.700701 (JROCKWAY on 2007-04-19)
+    </option>
+
+    <option value="JROCKWAY/Catalyst-Manual-5.700501/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.700501 (JROCKWAY on 2006-11-10)
+    </option>
+
+    <option value="JROCKWAY/Catalyst-Manual-5.700401/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">5.700401 (JROCKWAY on 2006-11-07)
+    </option>
+
+
+    </select>
+</li>
+
+<li class="nav-header">Permalinks</li>
+<li>
+    <a href="/pod/release/ETHER/Catalyst-Manual-5.9009/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">This version</a>
+</li>
+<li>
+    <a href="/pod/distribution/Catalyst-Manual/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod">Latest version</a>
+</li>
+<li class="nav-header">S.C.O</li>
+<li>
+    <a href="http://search.cpan.org/~ETHER/Catalyst-Manual-5.9009/lib/Catalyst/Manual/Tutorial/02_CatalystBasics.pod" rel="nofollow">This version</a>
+</li>
+<li>
+    <a href="http://search.cpan.org/perldoc?Catalyst::Manual::Tutorial::02_CatalystBasics" rel="nofollow">Latest version</a>
+</li>
+
+</ul>
+
+<button id="right-panel-toggle" class="btn-link" onclick="togglePanel('right'); return false;"><span class="panel-hidden">Show</span><span class="panel-visible">Hide</span> Right Panel</button>
+<div id="right-panel" class="pull-right">
+<div class="box-right">
+<!-- For plussers -->
+
+<div class="plussers hidden-phone">
+<div><b>++ed by:</b></div>
+
+
+
+
+<a class="display-all" href="/author/RSRCHBOY"><img src="https://secure.gravatar.com/avatar/00522ed47b44cfd83ce7bf57cd4a83ad?s=20&amp;d=identicon" title="RSRCHBOY" alt="RSRCHBOY"></a>
+
+
+
+<a class="display-all" href="/author/CHANKEY"><img src="https://secure.gravatar.com/avatar/5e3dc77d6818da1eba913fe7f3fed8ce?s=20&amp;d=identicon" title="CHANKEY" alt="CHANKEY"></a>
+
+
+
+<a class="display-all" href="/author/KARJALA"><img src="https://secure.gravatar.com/avatar/4d4ee1e65bd8c86f66c43eecfe42a3e6?s=20" title="KARJALA" alt="KARJALA"></a>
+
+
+
+<a class="display-all" href="/author/LUKAST"><img src="https://secure.gravatar.com/avatar/befd90fe1bec8d75ae9c4938a0f28861?s=20&amp;d=identicon" title="LUKAST" alt="LUKAST"></a>
+
+
+
+<a class="display-all" href="/author/KEEDI"><img src="https://secure.gravatar.com/avatar/95f905a7a4ccc573c711e9d264c0fde8?s=20&amp;d=https%3A%2F%2Fsecure.gravatar.com%2Favatar%2F95f905a7a4ccc573c711e9d264c0fde8%3Fs%3D130%26d%3Didenticon" title="KEEDI" alt="KEEDI"></a>
+
+
+
+<!-- Display counts of plussers-->
+<p>
+
+<a href="/release/Catalyst-Manual/plussers">19 PAUSE users</a><br>
+
+
+20 non-PAUSE users.
+
+</p>
+</div>
+
+
+<div class="author-pic">
+<a href="/author/ETHER">
+  <img src="https://secure.gravatar.com/avatar/bdc5cd06679e732e262f6c1b450a0237?s=130&amp;d=identicon">
+</a>
+
+<strong>
+  <a rel="author" href="/author/ETHER">ETHER</a>
+</strong>
+<span title="">Karen Etheridge 🐾 🌋</span>
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+
+
+
+<div id="contributors">
+    <div class="contributors-header">and 2 contributors</div>
+    <div align="right">
+        <button class="btn-link"
+            onclick="$(this).hide(); $('#contributors ul').slideDown(); return false;"
+        >show them</button>
+    </div>
+    <ul class="nav nav-list box-right" style="display: none">
+    
+        <li class="contributor">
+        
+        Catalyst Contributors, see Catalyst.pm
+        
+        </li>
+    
+        <li class="contributor" data-cpan-author="ZARQUON" data-contrib-email="zarquon@cpan.org">
+        
+        <a href="https://metacpan.org/author/ZARQUON"
+           class="cpan-author"
+        >Kieren Diment</a>
+        
+        </li>
+    
+    </ul>
+</div>
+
+
+
+</div>
+<ul class="nav-list box-right hidden-phone dependencies">
+    <li class="nav-header">Dependencies</li>
+    <li><i>none</i></li>
+    <li><hr /></li>
+    <li>
+        <a href="http://deps.cpantesters.org/?module=Catalyst::Manual">
+        <i class="fa fa-retweet fa-fw black"></i>CPAN Testers List</a>
+    </li>
+    <li>
+        <a href="/requires/distribution/Catalyst-Manual?sort=[[2,1]]">
+        <i class="fa fa-share fa-fw black"></i>Reverse dependencies</a>
+    </li>
+</ul>
+
+
+</div>
+<a name="___pod"></a>
+<div class="pod content anchors">
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#OVERVIEW">OVERVIEW</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#CREATE-A-CATALYST-PROJECT">CREATE A CATALYST PROJECT</a></li>
+  <li><a href="#HELLO-WORLD">HELLO WORLD</a>
+    <ul>
+      <li><a href="#The-Simplest-Way">The Simplest Way</a></li>
+      <li><a href="#Hello-World-Using-a-View-and-a-Template">Hello, World! Using a View and a Template</a></li>
+    </ul>
+  </li>
+  <li><a href="#CREATE-A-SIMPLE-CONTROLLER-AND-AN-ACTION">CREATE A SIMPLE CONTROLLER AND AN ACTION</a></li>
+  <li><a href="#AUTHORS">AUTHORS</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>Catalyst::Manual::Tutorial::02_CatalystBasics - Catalyst Tutorial - Chapter 2: Catalyst Application Development Basics</p>
+
+<h1 id="OVERVIEW">OVERVIEW</h1>
+
+<p>This is <b>Chapter 2 of 10</b> for the Catalyst tutorial.</p>
+
+<p><a href="https://metacpan.org/pod/distribution/Catalyst-Manual/lib/Catalyst/Manual/Tutorial.pod">Tutorial Overview</a></p>
+
+<ol>
+
+<li><p><a href="https://metacpan.org/pod/distribution/Catalyst-Manual/lib/Catalyst/Manual/Tutorial/01_Intro.pod">Introduction</a></p>
+
+</li>
+<li><p><b>02_Catalyst Basics</b></p>
+
+</li>
+<li><p><a href="https://metacpan.org/pod/distribution/Catalyst-Manual/lib/Catalyst/Manual/Tutorial/03_MoreCatalystBasics.pod">More Catalyst Basics</a></p>
+
+</li>
+<li><p><a href="https://metacpan.org/pod/distribution/Catalyst-Manual/lib/Catalyst/Manual/Tutorial/04_BasicCRUD.pod">Basic CRUD</a></p>
+
+</li>
+<li><p><a href="https://metacpan.org/pod/distribution/Catalyst-Manual/lib/Catalyst/Manual/Tutorial/05_Authentication.pod">Authentication</a></p>
+
+</li>
+<li><p><a href="https://metacpan.org/pod/distribution/Catalyst-Manual/lib/Catalyst/Manual/Tutorial/06_Authorization.pod">Authorization</a></p>
+
+</li>
+<li><p><a href="https://metacpan.org/pod/distribution/Catalyst-Manual/lib/Catalyst/Manual/Tutorial/07_Debugging.pod">Debugging</a></p>
+
+</li>
+<li><p><a href="https://metacpan.org/pod/distribution/Catalyst-Manual/lib/Catalyst/Manual/Tutorial/08_Testing.pod">Testing</a></p>
+
+</li>
+<li><p><a href="https://metacpan.org/pod/distribution/Catalyst-Manual/lib/Catalyst/Manual/Tutorial/09_AdvancedCRUD.pod">Advanced CRUD</a></p>
+
+</li>
+<li><p><a href="https://metacpan.org/pod/distribution/Catalyst-Manual/lib/Catalyst/Manual/Tutorial/10_Appendices.pod">Appendices</a></p>
+
+</li>
+</ol>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>In this chapter of the tutorial, we will create a very basic Catalyst web application, demonstrating a number of powerful capabilities, such as:</p>
+
+<ul>
+
+<li><p>Helper Scripts</p>
+
+<p>Catalyst helper scripts that can be used to rapidly bootstrap the skeletal structure of an application.</p>
+
+</li>
+<li><p>MVC</p>
+
+<p>Model/View/Controller (MVC) provides an architecture that facilitates a clean &quot;separation of control&quot; between the different portions of your application. Given that many other documents cover this subject in detail, MVC will not be discussed in depth here (for an excellent introduction to MVC and general Catalyst concepts, please see <a href="https://metacpan.org/pod/distribution/Catalyst-Manual/lib/Catalyst/Manual/About.pod">Catalyst::Manual::About</a>). In short:</p>
+
+<ul>
+
+<li><p>Model</p>
+
+<p>The model usually represents a data store. In most applications, the model equates to the objects that are created from and saved to your SQL database.</p>
+
+</li>
+<li><p>View</p>
+
+<p>The view takes model objects and renders them into something for the end user to look at. Normally this involves a template-generation tool that creates HTML for the user&#39;s web browser, but it could easily be code that generates other forms such as PDF documents, e-mails, spreadsheets, or even &quot;behind the scenes&quot; formats such as XML and JSON.</p>
+
+</li>
+<li><p>Controller</p>
+
+<p>As suggested by its name, the controller takes user requests and routes them to the necessary model and view.</p>
+
+</li>
+</ul>
+
+</li>
+<li><p>ORM</p>
+
+<p>The use of Object-Relational Mapping (ORM) technology for database access. Specifically, ORM provides an automated and standardized means to persist and restore objects to/from a relational database and will automatically create our Catalyst model for use with a database.</p>
+
+</li>
+</ul>
+
+<p>You can checkout the source code for this example from the catalyst subversion repository as per the instructions in <a href="https://metacpan.org/pod/distribution/Catalyst-Manual/lib/Catalyst/Manual/Tutorial/01_Intro.pod">Catalyst::Manual::Tutorial::01_Intro</a>.</p>
+
+<h1 id="CREATE-A-CATALYST-PROJECT">CREATE A CATALYST PROJECT</h1>
+
+<p>Catalyst provides a number of helper scripts that can be used to quickly flesh out the basic structure of your application. All Catalyst projects begin with the <code>catalyst.pl</code> helper (see <a href="https://metacpan.org/pod/Catalyst::Helper">Catalyst::Helper</a> for more information on helpers). Also note that as of Catalyst 5.7000, you will not have the helper scripts unless you install both <a href="https://metacpan.org/pod/Catalyst::Runtime">Catalyst::Runtime</a> and <a href="https://metacpan.org/pod/Catalyst::Devel">Catalyst::Devel</a>.</p>
+
+<p>In this first chapter of the tutorial, use the Catalyst <code>catalyst.pl</code> script to initialize the framework for an application called <code>Hello</code>:</p>
+
+<pre><code>    $ catalyst.pl Hello
+    created &quot;Hello&quot;
+    created &quot;Hello/script&quot;
+    created &quot;Hello/lib&quot;
+    created &quot;Hello/root&quot;
+    ...
+    created &quot;Hello/script/hello_create.pl&quot;
+    Change to application directory and Run &quot;perl Makefile.PL&quot; to make sure your install is complete
+    $ cd Hello</code></pre>
+
+<p>Note: If you are using Strawberry Perl on Win32, drop the &quot;.pl&quot; from the end of the &quot;catalyst.pl&quot; command and simply use &quot;catalyst Hello&quot;.</p>
+
+<p>The <code>catalyst.pl</code> helper script will display the names of the directories and files it creates:</p>
+
+<pre><code>    Changes               # Record of application changes
+    lib                   # Lib directory for your app&#39;s Perl modules
+        Hello             # Application main code directory
+            Controller    # Directory for Controller modules 
+            Model         # Directory for Models
+            View          # Directory for Views
+        Hello.pm          # Base application module
+    Makefile.PL           # Makefile to build application
+    hello.conf            # Application configuration file
+    README                # README file
+    root                  # Equiv of htdocs, dir for templates, css, javascript
+        favicon.ico
+        static            # Directory for static files
+            images        # Directory for image files used in welcome screen
+    script                # Directory for Perl scripts
+        hello_cgi.pl      # To run your app as a cgi (not recommended)
+        hello_create.pl   # To create models, views, controllers
+        hello_fastcgi.pl  # To run app as a fastcgi program
+        hello_server.pl   # The normal development server
+        hello_test.pl     # Test your app from the command line
+    t                     # Directory for tests
+        01app.t           # Test scaffold       
+        02pod.t           
+        03podcoverage.t </code></pre>
+
+<p>Catalyst will &quot;auto-discover&quot; modules in the Controller, Model, and View directories. When you use the <code>hello_create.pl</code> script it will create Perl module scaffolds in those directories, plus test files in the &quot;t&quot; directory. The default location for templates is in the &quot;root&quot; directory. The scripts in the script directory will always start with the lowercased version of your application name. If your app is MaiTai, then the create script would be &quot;maitai_create.pl&quot;.</p>
+
+<p>Though it&#39;s too early for any significant celebration, we already have a functioning application. We can use the Catalyst supplied script to start up a development server and view the default Catalyst page in your browser. All scripts in the script directory should be run from the base directory of your application, so change to the Hello directory.</p>
+
+<p>Run the following command to start up the built-in development web server (make sure you didn&#39;t forget the &quot;<code>cd Hello</code>&quot; from the previous step):</p>
+
+<p><b>Note</b>: The &quot;-r&quot; argument enables reloading on code changes so you don&#39;t have to stop and start the server when you update code. See <code>perldoc script/hello_server.pl</code> or <code>script/hello_server.pl --help</code> for additional options you might find helpful. Most of the rest of the tutorial will assume that you are using &quot;-r&quot; when you start the development server, but feel free to manually start and stop it (use <code>Ctrl-C</code> to breakout of the dev server) if you prefer.</p>
+
+<pre><code>    $ script/hello_server.pl -r
+    [debug] Debug messages enabled
+    [debug] Statistics enabled
+    [debug] Loaded plugins:
+    .----------------------------------------------------------------------------.
+    | Catalyst::Plugin::ConfigLoader  0.30                                       |
+    &#39;----------------------------------------------------------------------------&#39;
+    
+    [debug] Loaded dispatcher &quot;Catalyst::Dispatcher&quot;
+    [debug] Loaded engine &quot;Catalyst::Engine&quot;
+    [debug] Found home &quot;/home/catalyst/Hello&quot;
+    [debug] Loaded Config &quot;/home/catalyst/Hello/hello.conf&quot;
+    [debug] Loaded components:
+    .-----------------------------------------------------------------+----------.
+    | Class                                                           | Type     |
+    +-----------------------------------------------------------------+----------+
+    | Hello::Controller::Root                                         | instance |
+    &#39;-----------------------------------------------------------------+----------&#39;
+    
+    [debug] Loaded Private actions:
+    .----------------------+--------------------------------------+--------------.
+    | Private              | Class                                | Method       |
+    +----------------------+--------------------------------------+--------------+
+    | /default             | Hello::Controller::Root              | default      |
+    | /end                 | Hello::Controller::Root              | end          |
+    | /index               | Hello::Controller::Root              | index        |
+    &#39;----------------------+--------------------------------------+--------------&#39;
+    
+    [debug] Loaded Path actions:
+    .-------------------------------------+--------------------------------------.
+    | Path                                | Private                              |
+    +-------------------------------------+--------------------------------------+
+    | /                                   | /index                               |
+    | /                                   | /default                             |
+    &#39;-------------------------------------+--------------------------------------&#39;
+    
+    [info] Hello powered by Catalyst 5.90002
+    HTTP::Server::PSGI: Accepting connections at http://0:3000/</code></pre>
+
+<p>Point your web browser to <a href="http://localhost:3000">http://localhost:3000</a> (substituting a different hostname or IP address as appropriate) and you should be greeted by the Catalyst welcome screen (if you get some other welcome screen or an &quot;Index&quot; screen, you probably forgot to specify port 3000 in your URL). Information similar to the following should be appended to the logging output of the development server:</p>
+
+<pre><code>    [info] Hello powered by Catalyst 5.90002
+    HTTP::Server::PSGI: Accepting connections at http://0:3000/
+    [info] *** Request 1 (0.067/s) [19026] [Tue Aug 30 17:24:32 2011] ***
+    [debug] &quot;GET&quot; request for &quot;/&quot; from &quot;192.168.245.2&quot;
+    [debug] Path is &quot;/&quot;
+    [debug] Response Code: 200; Content-Type: text/html; charset=utf-8; Content-Length: 5613
+    [info] Request took 0.040895s (24.453/s)
+    .------------------------------------------------------------+-----------.
+    | Action                                                     | Time      |
+    +------------------------------------------------------------+-----------+
+    | /index                                                     | 0.000916s |
+    | /end                                                       | 0.000877s |
+    &#39;------------------------------------------------------------+-----------&#39;</code></pre>
+
+<p><b>Note</b>: Press <code>Ctrl-C</code> to break out of the development server if necessary.</p>
+
+<h1 id="HELLO-WORLD">HELLO WORLD</h1>
+
+<h2 id="The-Simplest-Way">The Simplest Way</h2>
+
+<p>The Root.pm controller is a place to put global actions that usually execute on the root URL. Open the <code>lib/Hello/Controller/Root.pm</code> file in your editor. You will see the &quot;index&quot; subroutine, which is responsible for displaying the welcome screen that you just saw in your browser.</p>
+
+<pre><code>    sub index :Path :Args(0) {
+        my ( $self, $c ) = @_;
+    
+        # Hello World
+        $c-&gt;response-&gt;body( $c-&gt;welcome_message );
+    }</code></pre>
+
+<p>Later on you&#39;ll want to change that to something more reasonable, such as a &quot;404&quot; message or a redirect, but for now just leave it alone.</p>
+
+<p>The &quot;<code>$c</code>&quot; here refers to the Catalyst context, which is used to access the Catalyst application. In addition to many other things, the Catalyst context provides access to &quot;response&quot; and &quot;request&quot; objects. (See <a href="https://metacpan.org/pod/Catalyst::Runtime">Catalyst::Runtime</a>, <a href="https://metacpan.org/pod/Catalyst::Response">Catalyst::Response</a>, and <a href="https://metacpan.org/pod/Catalyst::Request">Catalyst::Request</a>)</p>
+
+<p><code>$c-&gt;response-&gt;body</code> sets the HTTP response (see <a href="https://metacpan.org/pod/Catalyst::Response">Catalyst::Response</a>), while <code>$c-&gt;welcome_message</code> is a special method that returns the welcome message that you saw in your browser.</p>
+
+<p>The &quot;:Path :Args(0)&quot; after the method name are attributes which determine which URLs will be dispatched to this method. (You might see &quot;:Private&quot; if you are using an older version of Catalyst, but using that with &quot;default&quot; or &quot;index&quot; is currently deprecated. If so, you should also probably upgrade before continuing the tutorial.)</p>
+
+<p>Some MVC frameworks handle dispatching in a central place. Catalyst, by policy, prefers to handle URL dispatching with attributes on controller methods. There is a lot of flexibility in specifying which URLs to match. This particular method will match all URLs, because it doesn&#39;t specify the path (nothing comes after &quot;Path&quot;), but will only accept a URL without any args because of the &quot;:Args(0)&quot;.</p>
+
+<p>The default is to map URLs to controller names, and because of the way that Perl handles namespaces through package names, it is simple to create hierarchical structures in Catalyst. This means that you can create controllers with deeply nested actions in a clean and logical way. For example, the URL <code>http://hello.com/admin/articles/create</code> maps to the package <code>Hello::Controller::Admin::Articles</code>, and the <code>create</code> method.</p>
+
+<p>While you leave the <code>script/hello_server.pl -r</code> command running the development server in one window (don&#39;t forget the &quot;-r&quot; at the end!), open another window and add the following subroutine to your <code>lib/Hello/Controller/Root.pm</code> file:</p>
+
+<pre><code>    sub hello :Global {
+        my ( $self, $c ) = @_;
+    
+        $c-&gt;response-&gt;body(&quot;Hello, World!&quot;);
+    }</code></pre>
+
+<p><b>TIP</b>: See Appendix 1 for tips on removing the leading spaces when cutting and pasting example code from POD-based documents.</p>
+
+<p>Notice in the window running the Development Server that you should get output similar to the following:</p>
+
+<pre><code>    Saw changes to the following files:
+     - /home/catalyst/Hello/lib/Hello/Controller/Root.pm (modify)
+    
+    Attempting to restart the server
+    ...
+    [debug] Loaded Private actions:
+    .----------------------+--------------------------------------+--------------.
+    | Private              | Class                                | Method       |
+    +----------------------+--------------------------------------+--------------+
+    | /default             | Hello::Controller::Root              | default      |
+    | /end                 | Hello::Controller::Root              | end          |
+    | /index               | Hello::Controller::Root              | index        |
+    | /hello               | Hello::Controller::Root              | hello        |
+    &#39;----------------------+--------------------------------------+--------------&#39;
+    ...</code></pre>
+
+<p>The development server noticed the change in <code>Hello::Controller::Root</code> and automatically restarted itself.</p>
+
+<p>Go to <a href="http://localhost:3000/hello">http://localhost:3000/hello</a> to see &quot;Hello, World!&quot;. Also notice that the newly defined &#39;hello&#39; action is listed under &quot;Loaded Private actions&quot; in the development server debug output.</p>
+
+<h2 id="Hello-World-Using-a-View-and-a-Template">Hello, World! Using a View and a Template</h2>
+
+<p>In the Catalyst world a &quot;View&quot; itself is not a page of XHTML or a template designed to present a page to a browser. Rather, it is the module that determines the <i>type</i> of view -- HTML, PDF, XML, etc. For the thing that generates the <i>content</i> of that view (such as a Template Toolkit template file), the actual templates go under the &quot;root&quot; directory.</p>
+
+<p>To create a TT view, run:</p>
+
+<pre><code>    $ script/hello_create.pl view HTML TT</code></pre>
+
+<p>This creates the <code>lib/Hello/View/HTML.pm</code> module, which is a subclass of <code>Catalyst::View::TT</code>.</p>
+
+<ul>
+
+<li><p>The &quot;view&quot; keyword tells the create script that you are creating a view.</p>
+
+</li>
+<li><p>The first argument &quot;HTML&quot; tells the script to name the View module &quot;HTML.pm&quot;, which is a commonly used name for TT views. You can name it anything you want, such as &quot;MyView.pm&quot;. If you have more than one view, be sure to set the default_view in Hello.pm (See <a href="https://metacpan.org/pod/Catalyst::View::TT">Catalyst::View::TT</a> for more details on setting this).</p>
+
+</li>
+<li><p>The final &quot;TT&quot; tells Catalyst the <i>type</i> of the view, with &quot;TT&quot; indicating that you want to use a Template Toolkit view.</p>
+
+</li>
+</ul>
+
+<p>If you look at <code>lib/Hello/View/HTML.pm</code> you will find that it only contains a config statement to set the TT extension to &quot;.tt&quot;.</p>
+
+<p>Now that the HTML.pm &quot;View&quot; exists, Catalyst will autodiscover it and be able to use it to display the view templates using the &quot;process&quot; method that it inherits from the <code>Catalyst::View::TT</code> class.</p>
+
+<p>Template Toolkit is a very full-featured template facility, with excellent documentation at <a href="http://template-toolkit.org/">http://template-toolkit.org/</a>, but since this is not a TT tutorial, we&#39;ll stick to only basic TT usage here (and explore some of the more common TT features in later chapters of the tutorial).</p>
+
+<p>Create a <code>root/hello.tt</code> template file (put it in the <code>root</code> under the <code>Hello</code> directory that is the base of your application). Here is a simple sample:</p>
+
+<pre><code>    &lt;p&gt;
+        This is a TT view template, called &#39;[% template.name %]&#39;.
+    &lt;/p&gt;</code></pre>
+
+<p>[% and %] are markers for the TT parts of the template. Inside you can access Perl variables and classes, and use TT directives. In this case, we&#39;re using a special TT variable that defines the name of the template file (<code>hello.tt</code>). The rest of the template is normal HTML.</p>
+
+<p>Change the hello method in <code>lib/Hello/Controller/Root.pm</code> to the following:</p>
+
+<pre><code>    sub hello :Global {
+        my ( $self, $c ) = @_;
+    
+        $c-&gt;stash(template =&gt; &#39;hello.tt&#39;);
+    }</code></pre>
+
+<p>This time, instead of doing <code>$c-&gt;response-&gt;body()</code>, you are setting the value of the &quot;template&quot; hash key in the Catalyst &quot;stash&quot;, an area for putting information to share with other parts of your application. The &quot;template&quot; key determines which template will be displayed at the end of the request cycle. Catalyst controllers have a default &quot;end&quot; action for all methods which causes the first (or default) view to be rendered (unless there&#39;s a <code>$c-&gt;response-&gt;body()</code> statement). So your template will be magically displayed at the end of your method.</p>
+
+<p>After saving the file, the development server should automatically restart (again, the tutorial is written to assume that you are using the &quot;-r&quot; option -- manually restart it if you aren&#39;t), and look at <a href="http://localhost:3000/hello">http://localhost:3000/hello</a> in your web browser again. You should see the template that you just created.</p>
+
+<p><b>TIP:</b> If you keep the server running with &quot;-r&quot; in a &quot;background window,&quot; don&#39;t let that window get totally hidden... if you have a syntax error in your code, the debug server output will contain the error information.</p>
+
+<p><b>Note:</b> You will probably run into a variation of the &quot;stash&quot; statement above that looks like:</p>
+
+<pre><code>    $c-&gt;stash-&gt;{template} = &#39;hello.tt&#39;;</code></pre>
+
+<p>Although this style is still relatively common, the approach we used previous is becoming more common because it allows you to set multiple stash variables in one line. For example:</p>
+
+<pre><code>    $c-&gt;stash(template =&gt; &#39;hello.tt&#39;, foo =&gt; &#39;bar&#39;, 
+              another_thing =&gt; 1);</code></pre>
+
+<p>You can also set multiple stash values with a hashref:</p>
+
+<pre><code>    $c-&gt;stash({template =&gt; &#39;hello.tt&#39;, foo =&gt; &#39;bar&#39;, 
+              another_thing =&gt; 1});</code></pre>
+
+<p>Any of these formats work, but the <code>$c-&gt;stash(name =&gt; value);</code> style is growing in popularity -- you may wish to use it all the time (even when you are only setting a single value).</p>
+
+<h1 id="CREATE-A-SIMPLE-CONTROLLER-AND-AN-ACTION">CREATE A SIMPLE CONTROLLER AND AN ACTION</h1>
+
+<p>Create a controller named &quot;Site&quot; by executing the create script:</p>
+
+<pre><code>    $ script/hello_create.pl controller Site</code></pre>
+
+<p>This will create a <code>lib/Hello/Controller/Site.pm</code> file (and a test file). If you bring Site.pm up in your editor, you can see that there&#39;s not much there to see.</p>
+
+<p>In <code>lib/Hello/Controller/Site.pm</code>, add the following method:</p>
+
+<pre><code>    sub test :Local {
+        my ( $self, $c ) = @_;
+    
+        $c-&gt;stash(username =&gt; &#39;John&#39;,
+                  template =&gt; &#39;site/test.tt&#39;);
+    }</code></pre>
+
+<p>Notice the &quot;Local&quot; attribute on the <code>test</code> method. This will cause the <code>test</code> action (now that we have assigned an &quot;action type&quot; to the method it appears as a &quot;controller action&quot; to Catalyst) to be executed on the &quot;controller/method&quot; URL, or, in this case, &quot;site/test&quot;. We will see additional information on controller actions throughout the rest of the tutorial, but if you are curious take a look at <a href="https://metacpan.org/pod/distribution/Catalyst-Manual/lib/Catalyst/Manual/Intro.pod#Actions">&quot;Actions&quot; in Catalyst::Manual::Intro</a>.</p>
+
+<p>It&#39;s not actually necessary to set the template value as we do here. By default TT will attempt to render a template that follows the naming pattern &quot;controller/method.tt&quot;, and we&#39;re following that pattern here. However, in other situations you will need to specify the template (such as if you&#39;ve &quot;forwarded&quot; to the method, or if it doesn&#39;t follow the default naming convention).</p>
+
+<p>We&#39;ve also put the variable &quot;username&quot; into the stash, for use in the template.</p>
+
+<p>Make a subdirectory &quot;site&quot; in the &quot;root&quot; directory.</p>
+
+<pre><code>    $ mkdir root/site</code></pre>
+
+<p>Create a new template file in that directory named <code>root/site/test.tt</code> and include a line like:</p>
+
+<pre><code>    &lt;p&gt;Hello, [% username %]!&lt;/p&gt;</code></pre>
+
+<p>Once the server automatically restarts, notice in the server output that <code>/site/test</code> is listed in the Loaded Path actions. Go to <a href="http://localhost:3000/site/test">http://localhost:3000/site/test</a> in your browser and you should see your test.tt file displayed, including the name &quot;John&quot; that you set in the controller.</p>
+
+<p>You can jump to the next chapter of the tutorial here: <a href="https://metacpan.org/pod/distribution/Catalyst-Manual/lib/Catalyst/Manual/Tutorial/03_MoreCatalystBasics.pod">More Catalyst Basics</a></p>
+
+<h1 id="AUTHORS">AUTHORS</h1>
+
+<p>Gerda Shank, <code>gerda.shank@gmail.com</code> Kennedy Clark, <code>hkclark@gmail.com</code></p>
+
+<p>Feel free to contact the author for any errors or suggestions, but the best way to report issues is via the CPAN RT Bug system at <a href="https://rt.cpan.org/Public/Dist/Display.html?Name=Catalyst-Manual">https://rt.cpan.org/Public/Dist/Display.html?Name=Catalyst-Manual</a>.</p>
+
+<p>Copyright 2006-2011, Kennedy Clark, under the Creative Commons Attribution Share-Alike License Version 3.0 (<a href="http://creativecommons.org/licenses/by-sa/3.0/us/">http://creativecommons.org/licenses/by-sa/3.0/us/</a>).</p>
+
+	<div id="install-instructions-dialog" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title">Module Install Instructions</h4>
+            </div>
+            <div class="modal-body">
+                <p>To install Catalyst::Manual::Tutorial::02_CatalystBasics, simply copy and paste either of the commands in to your terminal</p>
+                <p><a href="/pod/distribution/App-cpanminus/bin/cpanm">cpanm</a></p>
+                <pre>
+                    cpanm Catalyst::Manual::Tutorial::02_CatalystBasics</pre>
+                <p><a href="https://metacpan.org/pod/CPAN">CPAN shell</a></p>
+                <pre>
+                    perl -MCPAN -e shell
+                    install Catalyst::Manual::Tutorial::02_CatalystBasics</pre>
+                <p>For more information on module installation please visit <a href="http://www.cpan.org/modules/INSTALL.html">the detailed CPAN module installation guide</a>.</p>
+            </div>
+            <div class="modal-footer">
+                <a href="#" data-dismiss="modal" class="btn">Close</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+                </div>
+            </div>
+
+            <div class="row footer">
+                <div class="hidden-xs hidden-sm col-md-2">&nbsp;</div>
+                <div class="col-xs-2 col-sm-1 col-md-1" style="text-align: center">
+                    <a href="https://github.com/CPAN-API/cpan-api/blob/master/docs/API-docs.md">API</a>
+                </div>
+                <div class="col-xs-5 col-sm-3 col-md-2" style="text-align: center">
+                    <a href="/about">About MetaCPAN</a>
+                </div>
+                <div class="hidden-xs col-sm-2 col-md-2" style="text-align: center">
+                    <a href="/mirrors">CPAN Mirrors</a>
+                </div>
+                <div class="hidden-xs col-sm-3 col-md-2" style="text-align: center">
+                    <a href="https://github.com/CPAN-API/metacpan-web">Fork metacpan.org</a>
+                </div>
+                <div class="hidden-xs col-sm-1 col-md-1" style="text-align: center">
+                    <a href="https://www.perl.org/">Perl.org</a>
+                </div>
+            </div>
+
+            <div class="row" style="padding:15px">
+              <div class="hidden-xs col-md-4 text-right" style="padding:25px">
+                <span class="hidden-phone" style="color: #999">Hosting generously provided by:</span>
+              </div>
+              <div class="col-xs-9 col-md-4" style="padding:25px">
+                <a href="http://www.bytemark.co.uk/r/metacpan.org/" target="_blank">
+                  <img width="210" src="/static/images/sponsors/bytemark_logo.png">
+                </a>
+              </div>
+              <div class="col-xs-9 col-md-4" style="padding:15px">
+                <a target="_blank" href="https://www.liquidweb.com/">
+                  <img width="170" src="/static/images/sponsors/liquidweb_color.png">
+                </a>
+              </div>
+            </div>
+        </div>
+        <div class="modal fade" tabindex="-1" role="dialog" id="keyboard-shortcuts">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h4 class="modal-title">Keyboard Shortcuts</h4>
+              </div>
+              <div class="modal-body row">
+                <div class="col-md-6">
+  <table class="table keyboard-shortcuts">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Global</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="keys">
+          <kbd>s</kbd>
+        </td>
+        <td>Focus search bar</td>
+      </tr>
+      <tr>
+        <td class="keys">
+          <kbd>?</kbd>
+        </td>
+        <td>Bring up this help dialog</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <table class="table keyboard-shortcuts">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Github</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="keys">
+          <kbd>g</kbd> <kbd>p</kbd>
+        </td>
+        <td>Go to pull requests</td>
+      </tr>
+      <tr>
+        <td class="keys">
+          <kbd>g</kbd> <kbd>i</kbd>
+        </td>
+        <td>go to github issues (only if github is preferred repository)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="col-md-6">
+  <table class="table keyboard-shortcuts">
+    <thead>
+      <tr>
+        <th></th>
+        <th>POD</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="keys">
+          <kbd>g</kbd> <kbd>a</kbd>
+        </td>
+        <td>Go to author</td>
+      </tr>
+      <tr>
+        <td class="keys">
+          <kbd>g</kbd> <kbd>c</kbd>
+        </td>
+        <td>Go to changes</td>
+      </tr>
+      <tr>
+        <td class="keys">
+          <kbd>g</kbd> <kbd>i</kbd>
+        </td>
+        <td>Go to issues</td>
+      </tr>
+      <tr>
+        <td class="keys">
+          <kbd>g</kbd> <kbd>d</kbd>
+        </td>
+        <td>Go to dist</td>
+      </tr>
+      <tr>
+        <td class="keys">
+          <kbd>g</kbd> <kbd>r</kbd>
+        </td>
+        <td>Go to repository/SCM</td>
+      </tr>
+      <tr>
+        <td class="keys">
+          <kbd>g</kbd> <kbd>s</kbd>
+        </td>
+        <td>Go to source</td>
+      </tr>
+      <tr>
+        <td class="keys">
+          <kbd>g</kbd> <kbd>b</kbd>
+        </td>
+        <td>Go to file browse</td>
+      </tr>
+
+    </tbody>
+  </table>
+</div>
+
+              </div>
+              <div class="modal-footer"></div>
+            </div>
+          </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,3630 @@
+$VAR1 = bless( {
+                 'Contents' => [
+                                 'Empirical Development of an Exponential Probabilistic Model for Text Retrieval Using Textual Analysis to Build a Better Model Jaime Teevan MIT AI Lab Cambridge, MA 02139',
+                                 'David R. Karger MIT LCS Cambridge, MA 02139',
+                                 'teevan@ai.mit.edu ABSTRACT Much work in information retrieval focuses on using a model of documents and queries to derive retrieval algorithms.',
+                                 'Model based development is a useful alternative to heuristic development because in a model the assumptions are explicit and can be examined and refined independent of the particular retrieval algorithm.',
+                                 'We explore the explicit assumptions underlying the na¨ve Bayesian framework by performing comi putational analysis of actual corpora and queries to devise a generative document model that closely matches text.',
+                                 'Our thesis is that a model so developed will be more accurate than existing models, and thus more useful in retrieval, as well as other applications.',
+                                 'We test this by learning from a corpus the best document model.',
+                                 'We find the learned model better predicts the existence of text data and has improved performance on certain IR tasks.',
+                                 'karger@theor y.lcs.mit.edu or at least make explicit, these heuristic judgments by developing models of queries and documents that could be used to deduce appropriate retrieval strategies.',
+                                 'For example, probabilistic models are a common type of model used for IR.',
+                                 'They posit that relevant and irrelevant documents are generated from probability distributions and use these distributions to determine probabilities of relevance for each document.',
+                                 'They return, in accordance with the Probability Ranking Principle [23], documents with high relevance probabilities.',
+                                 'Even when model-based approaches fail to improve retrieval, they provide a useful approach to understanding text.',
+                                 'The models can be tested against actual corpora, generalized to other applications, and may even, in their characterization of text, suggest promising performance-improving heuristics.',
+                                 'However, while probabilistic models are intuitively appealing and easy to work with, relatively little attempt has been made to test the accuracy of their assumptions against text data.',
+                                 'Often a model is developed without reference to the data; the only actual interaction with text is when testing a particular retrieval system based on the model (e.g., [8, 15, 22]).',
+                                 'At that point it is difficult to decide whether unsatisfactory retrieval is due to the retrieval system or the underlying model.',
+                                 'In this work our primary goal is to develop a generative probabilistic model that better describes text, and we rely on this better model to improve retrieval.',
+                                 'Some previous work has tried to match underlying model assumptions closely to text through manual analysis of a small number of terms [2, 14].',
+                                 'In contrast, we match the assumptions to text computationally using a large text corpus (TREC).',
+                                 'Thus, though we restrict ourselves throughout our analysis to na¨ve Bayesian i models, we are able to significantly relax some of the assumptions of standard probabilistic models and computationally explore a much larger space of possible models.',
+                                 'Our hope is that improvements to the model will propagate through any model-based retrieval algorithm, yielding better performance in retrieval.',
+                                 'This hope is not always fulfilled, as has been illustrated by the relatively unsuccessful attempts to allow for term dependencies in retrieval [12].',
+                                 'Still, by focusing on a few empirically inaccurate and easily correctable flaws in current models, we find we are able to improve our model\'s performance on certain IR tasks.',
+                                 'We begin by discussing relevant work in model-based retrieval.',
+                                 'We then give a quick overview of Bayesian machine learning and na¨ve Bayesian retrieval.',
+                                 'We briefly exami',
+                                 'Categories and Subject Descriptors H.3.3 [Information Storage and Retrieval]: Information Search and Retrieval--retrieval models',
+                                 'General Terms Experimentation',
+                                 'Keywords Information Retrieval, Formal Models, Machine Learning',
+                                 '1.INTRODUCTION',
+                                 'The goal of information retrieval (IR) is to determine which documents are relevant to a user\'s information need.',
+                                 'In early IR work, this determination was based on heuristic judgments [17] (e.g., that documents containing the user\'s query terms are likely to be relevant) followed by heuristic tweaking of parameters (e.g., term weights) to make the system work.',
+                                 'Subsequently, attempts were made to avoid,',
+                                 'Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page.',
+                                 'To copy otherwise, to republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee.',
+                                 'SIGIR\'03, July28­August1, 2003, Toronto, Canada.',
+                                 'Copyright 2003 ACM 1-58113-646-3/03/0007 ...$5.00.',
+                                 'ine the well-known multinomial model, which assumes that terms in a document follow a multinomial distribution, and show that this model unavoidably diverges from the actual statistics of text.',
+                                 'We then discuss how we identify, via examination of the corpus, a better model chosen from a class known as the one-parameter exponential families, which includes the multinomial model as one instance.',
+                                 'We conclude with a discussion of how to use this improved model for retrieval and present experimental results.',
+                                 '3.',
+                                 'A BRIEF BAYESIAN TUTORIAL Our approach is motivated by the standard Bayesian machine learning framework.',
+                                 'In this section, we discuss that framework in order to lay the groundwork for our approach.',
+                                 'Due to space constraints, we focus on the "what" and give short shrift to the "why" of this approach; such material can be found in several sources [1, 9].',
+                                 'We begin with the assumption that relevant and irrelevant documents for a query are drawn from two distinct probability distributions.',
+                                 'Let d denote a random document, and variable r has the value one if a document is relevant and zero otherwise.',
+                                 'Then Pr(d | r = 1) (resp.',
+                                 'Pr(d | r = 0)) denotes the probability that a randomly generated relevant (resp.',
+                                 'irrelevant) document turns out to be d. The Probability Ranking Principle [23] suggests that documents should be ranked for the user in order of their probabilities of relevance, Pr(r = 1 | d).',
+                                 'A standard application of Bayes Law shows that this ranking is independent of Pr(r = 1) and monotonic in a ranking value (RV) Pr(d | r = 1) . Pr(d | r = 0) In practice, while the probability distributions above are assumed to exist, they are not known at the time of retrieval.',
+                                 'Bayesian machine learning provides a principled way to estimate these distributions based on data such as an input query or labeled documents.',
+                                 'To estimate the desired distributions, we assume that the correct distribution is one member of some specific family of distributions and, based on the query-related information provided, we attempt to choose a plausible distribution from that family.',
+                                 'Two questions must be answered to use this approach: (i) what family of distributions is used (a modeling question), and (ii) which distribution to choose from the family given the data (a model-fitting question).',
+                                 'As an example of what not to do, we could take our relevant-document distribution to be a uniform distribution on the set of labeled relevant documents.',
+                                 'This would be an extreme example of overfitting: the distribution would perfectly explain the labeled documents we had seen, but assign a zero probability to any document we had not seen.',
+                                 'Such a distribution would be useless for predicting the relevance of other documents.',
+                                 'To avoid over-fitting, the standard approach in machine learning is to use a prior.',
+                                 'A prior is a probability distribution over possible probability distributions.',
+                                 'In other words, we label the possible probability distributions by some parameter and then specify a prior Pr().',
+                                 'When presented with some labeled data D drawn from the unknown distribution, we choose as a plausible distribution the most likely value of , i.e. argmax Pr( | D).',
+                                 'This standard approach is referred to as Maximum A Posteriori (MAP) estimation.',
+                                 'As an example, nearly every probabilistic model assigns a prior that forces some nonzero probability onto every term in the corpus, even if the term does not appear in the labeled data.',
+                                 'Ignoring algorithmic issues, the only thing needed in a Bayesian machine learning approach to labeling documents is a prior over probability distributions of relevant and irrelevant documents and some information, such as labeled data, for selecting a distribution.',
+                                 'While in practice it is standard to only address the model-fitting question (ii) through machine learning, we also address the modeling question (i).',
+                                 '2.RELATED WORK',
+                                 'While the statistical properties of text corpora are fundamental to the use of probabilistic models, as well as to the use of other recent models [19, 21], the statistical properties have not necessarily been fundamental to the models\' development, nor to understanding their assumptions.',
+                                 'Most IR models do attempt to minimize unfounded assumptions, although often without understanding which ones actually are unfounded.',
+                                 'For example, Jin, Hauptmann and Zhai [10] suggested using the probability a query would be the title of a document to rank documents, without investigating whether queries look anything like document titles.',
+                                 'Early IR systems did place focus on text during their development.',
+                                 'For example, Sparck Jones [11] used analysis of three small corpora to suggest the use of inverse document frequency for term weighting, now a common practice, based on textual analysis.',
+                                 'Recently, people have revisited textual analysis on newer and larger data sets.',
+                                 'For example, Greiff [7] suggested improvements to tf.idf by studying 85,000 Associated Press articles from TREC.',
+                                 'Because probabilistic models have explicit assumptions that make such textual analysis straightforward, some recent work has also been applied within a probabilistic framework.',
+                                 'Church and Gale [2] and Katz [14] both look at empirical term distributions to build better models.',
+                                 'The work presented here takes textual analysis a step further by, instead of imposing a model based on analysis, learning one computationally.',
+                                 'We derive our model within the well studied na¨ve Bayesian i framework, of which Lewis provides a good overview [16].',
+                                 'Within this framework, researchers have considered a number of term distribution families to model text, with the selection sometimes based on textual analysis [2, 14].',
+                                 'Distributions that have been explored include binomial [5], multinomial [13, 16], Poisson [22], Poisson mixtures [2] and more [3].',
+                                 'The work we present here differs from this earlier na¨ve i Bayesian work because we do not restrict our model to a particular family within the framework, but rather learn the best family from the text.',
+                                 'To learn the best distribution family, and thus our model, we do semi-parametric analysis of a single-parameter exponential family distribution, and there is substantial relevant statistical and machine learning literature on this [1, 6, 9].',
+                                 'Previously, attempts have been made to learn IR model parameters from text [24], but such work has not focused on learning the actual model.',
+                                 'In learning the model, we use relevance judgments on past queries in a principled way to devise a retrieval strategy for future queries.',
+                                 'Thus our work serves as an instance of cross query learning.',
+                                 'Similarly, Fitzpatrick and Dent [4] used textually similar past queries for relevance feedback.',
+                                 'In contrast to their work, rather than using topically related past queries within a specific model, we use all past queries to teach us an overall document model for relevant documents.',
+                                 '4.EXAMPLE: MULTINOMIAL MODEL',
+                                 '10',
+                                 '0',
+                                 'As a concrete example, the multinomial model [13, 16] assumes that the family of probability distributions is precisely the set of multinomial distributions over words.',
+                                 'A document is considered to be generated by repeated independent sampling from a probability distribution of words in the corpus.',
+                                 'Under such a model, the probability distribution for the number of times dt that term t appears in a document is d( Pr(dt | r = x) = t r r t =x )dt (1 - t =x ) -dt',
+                                 '10',
+                                 '-5',
+                                 'Probability',
+                                 '10',
+                                 '-10',
+                                 '10',
+                                 '-15',
+                                 '(1)',
+                                 '10',
+                                 '-20',
+                                 'Data Multinomial New Model 1 2 3 4 5',
+                                 '0',
+                                 'Term occurs exactly x times',
+                                 'where is the document length.',
+                                 'Within this family, choosing r t =x sets the particular distribution for each term.',
+                                 'The multinomial model is very simple, but not very good.',
+                                 'The inadequacies of this model are well known, and can be found in the detailed analysis done by Church and Gale [2] and Katz [14].',
+                                 'However, their analysis was done over small sets of terms that were considered to have high content value, while we want the model we build to describe typical terms.',
+                                 'For this reason, we briefly revisit the inadequacies of the multinomial model, looking at term distributions for hundreds of thousands of terms instead of just hundreds.',
+                                 'Our analysis gives us an understanding of the corpus we are working with and a baseline to compare with as we improve on the multinomial model.',
+                                 'The quality of predictions made using a model (family of distributions) depends on how well the distribution selected from the model matches the actual unknown distribution.',
+                                 'A bad match may arise from learning the distribution poorly, but a more fundamental barrier arises if the family contains no distributions similar to the real distribution.',
+                                 'In that case, no learning algorithm could find a good match.',
+                                 'The standard way to measure the fit of a distribution to some data is to ask how likely that data was to be generated by the distribution.',
+                                 'In this framework, the best fit distribution in the model is the maximum likelihood distribution, which assigns the maximum probability to the observed data; the higher the probability, the better the fit.',
+                                 'Because our goal in this case is to investigate the existence of a good distribution in the model, as opposed to using the distribution, we have no need to worry about over-fitting, and do not use a prior.',
+                                 'For the multinomial model, in the absence of a prior, the maximum likelihood parameter setting for t , is the average rate of appearance of term t in the labeled data.',
+                                 'We evaluated how well the multinomial family captured the statistical properties of a particular corpus, TREC 1 and 2.',
+                                 'We fit a multinomial model to the corpus and then compared the fit model to reality.',
+                                 'Our overall goal was to determine how similar to multinomial distributions the observed distributions of terms in documents were.',
+                                 'Since a multinomial distribution depends on document length as well as its probability parameter, we focused on two sets of 10,000 and 25,000 documents of similar length.',
+                                 'Even if a term were drawn from a multinomial distribution, its empirical distribution might not look multinomial.',
+                                 'For this reason, we average observed distributions of many "similar" terms to smooth out noise.',
+                                 'Because for multinomial distributions the actual rate of occurrence is tightly concentrated around its expected number of occurrence, we considered terms similar if they had similar rates of occurrence.',
+                                 'Figure 1 shows, on a log scale, the empirical term distribu-',
+                                 'Figure 1: The empirical term distribution shows terms are more clustered compared to what would be expected for the multinomial model.',
+                                 'tions found by averaging 500 terms that appear 15 times out of 3 million possible times in a corpus of 25,000 documents of similar length.',
+                                 'This is compared with the maximum likelihood multinomial distribution for terms with the same rate of occurrence.',
+                                 'The empirical distribution has a much heavier tail than the multinomial.',
+                                 'That is, for the given average number of occurrences, the probability of multiple occurrences of a term in a document is much higher than a multinomial model would expect.',
+                                 'The multinomial model assumes that whether a term occurs again in a document independent of whether it has already occurred, but clearly from Figure 1 this is an inaccurate assumption.1 This behavior, also called "burstiness", that we found over a large number of terms in a large corpus is consistent with what others have observed [14, 2] through more in depth analysis on fewer "content" terms appearing in smaller corpora.',
+                                 '5.',
+                                 'CANDIDATES FOR A BETTER MODEL Given the failure of the multinomial model to match the text, we sought a better model.',
+                                 'However, we wanted to preserve two important features of the multinomial model.',
+                                 'First, computations over it, and in particular retrieval algorithms using it, are very efficient.',
+                                 'Second, its relatively small collection of distributions prevents over-fitting.',
+                                 'We therefore chose to focus on na¨ve Bayesian models [16] coni structed from one parameter exponential families.',
+                                 '5.1 Na¨ve Bayesian Models i While all probabilistic models assume that a document can be statistically described by certain features (we assume terms), and that the occurrence of those features is sufficient to determine document relevance, a na¨ve Bayesian model i further assumes document terms are independent given a relevance judgment.',
+                                 'This is what makes na¨ve Bayesian i models efficient for retrieval.',
+                                 'Many probabilistic IR models fit within the na¨ve Bayesian framework.',
+                                 'i Because the term probabilities are independent, interactions between terms are ignored.',
+                                 'If document d has T terms, While the empirical term distribution is not multinomial, the distribution of its logarithm is roughly multinomial in shap e. Applying the standard machine learning paradigm to this multinomially distributed quantity yields a variant of the standard vector space mo del, where the weight of a term is set prop ortional to the log of its o ccurrence count.',
+                                 '1',
+                                 'with the tth term represented as dt , the probability of observing the document given a relevance judgment is Pr(d | r = x) = tT Pr(dt | r = x),',
+                                 'an easily computable length factor.',
+                                 'At the present time, we have not investigated this approach experimentally; instead, for the remainder of the paper, we ignore length as an issue.',
+                                 '=0',
+                                 '5.2 Exponential Families Having chosen the na¨ve Bayesian framework, we still need i to define a family from which we can select probability distributions for the individual terms.',
+                                 'We choose to limit the possible distribution families to those that could describe each term with a single parameter.',
+                                 'This limitation rules out many plausible distribution families, such as mixture models.',
+                                 'However, this restriction reduces the risk of overfitting, as there are fewer parameters to estimate with the same amount of data, and makes for a simple and efficient model that translates easily into a vector space model.',
+                                 'Narrowing further, we chose the set of one-parameter exponential families.',
+                                 'Exponential families are popular in machine learning because they are quite general (the Poisson, Binomial, Uniform, and Gaussian families are all exponential families) but can be optimized efficiently.',
+                                 'Thus, much work has been done on how to best work with such families [1, 6].',
+                                 'For our application, they support efficient retrieval with the same complexity as standard models.',
+                                 'A one parameter exponential family takes the form Pr(dt | t ) = f (dt )g (t)et h(dt ) , (2)',
+                                 'where Pr(dt | r = x) denotes the probability of seeing dt occurrences of term t. While the independence assumption is obviously an oversimplification, it is common and useful because the number of terms in a corpus is typically very large.',
+                                 'Having to account for all possible interactions between terms would require an infeasible amount of time and space, as well as an infeasible amount of data with which to estimate those interactions.',
+                                 'Efficiency By assuming that all features are independent, we can simplify our ranking value (from Section 3) considerably.',
+                                 'RV = t Pr(dt | r = 1) Pr(d | r = 1) = . Pr(d | r = 0) Pr(dt | r = 0) =0 T',
+                                 'Taking the logarithm of this quantity, which helps avoid numerical instability caused by multiplying numerous small quantities, produces a sum of per term scores.',
+                                 'Although the above shows a score per term in the corpus, it is possible to factor out the contributions of zero-occurrence terms and be left with a sum only over terms appearing in the document [22].',
+                                 'This sum can be evaluated with much the same efficiency as a traditional vector space model (as can be seen, for example, in Section 7.2.2).',
+                                 'Relation to the Multinomial Model It should be noted that the multinomial model discussed in Section 4 does does not fit our definition of a na¨ve Bayesian i model.',
+                                 'Once the document length is fixed, a large number of occurrences of one term leaves fewer spaces for other terms to occur, so distinct term occurrence counts are not independent.',
+                                 'However, the closely related Poisson model, in which each term has an (independent) Poisson distribution d Pr(dt ) = e-t t t /dt ! does fit the na¨ve Bayes framework.',
+                                 'i Like other na¨ve Bayesian models, the Poisson model does i not produce documents of a fixed length, rather, it produces a distribution over document lengths.',
+                                 'wherf g (t ) is a normalizing constant equal to the inverse e of (dt )exp (t h(dt )) ddt . Recall that dt is the number of occurrences of term t. The functions f and h, which apply in the same way to all terms, define the specific exponential family.',
+                                 'A particular distribution for a particular term is specified from the family by setting the d arameter t . For pa example, for a binomial model, f (dt ) = t nd h(dt ) = dt . For a Poisson model f (dt ) = (dt !)-1 and h(dt ) = dt . We emphasize: the model is specified once by choice of f and h; then, at retrieval time, learning is performed by fitting the t parameters.',
+                                 '6.',
+                                 'HYPER-LEARNING A BETTER MODEL Instead of imposing a particular exponential family, such as the Poisson family, on the term distributions, we propose that the family should be determined experimentally, directly from the data (the text, past queries and relevance judgments).',
+                                 'This process, of examining the entire corpus to set the "hyper-parameters" f and h in our model, is similar in style to learning the parameters t from labeled information; to distinguish it we call this preliminary process hyper-learning.',
+                                 'Given a hyper-learned model, it is then necessary at retrieval time to learn the parameters that define the specific term distributions within the family as relate to the query (e.g., t from Equation 1 for the multinomial model).',
+                                 'In this section we describe the hyper-learning process.',
+                                 'By hyper-learning a better distribution family over the TREC corpus, we found a new model that increased the burstiness of term occurrences and more accurately matched our data.',
+                                 'Coping with Length That na¨ve Bayesian models produce documents of varying i lengths can have undesirable consequences.',
+                                 'The relevant and irrelevant document distributions may induce different document-length distributions, leading to questionable deductions such as "short documents are more likely to be relevant than long ones."',
+                                 'While such a conclusion may be supportable, some prefer to apply length normalization to eliminate this dependence, usually by ad hoc methods [3].',
+                                 'Length normalization can be pursued in a principled fashion.',
+                                 'From the na¨ve Bayesian model, we could derive an api propriate and tractable length normalization scheme by conditioning the probability distributions on the given length of a document.',
+                                 'Because in finding the probability of a document we sum many small independent quantities (term counts), the distribution of document lengths will be approximately Gaussian with computable mean and variance.',
+                                 'This would allow us to normalize for length by multiplying each document\'s relevant and irrelevant probability by',
+                                 '6.1 Finding the Best Family As discussed for the multinomial model, a standard measure of "fit" between a given distribution and some data is the probability the distribution assigns to the data; within a family, the "best fit" distribution is the one that assigns',
+                                 'maximum likelihood to the data.',
+                                 'Formally, the quality of a model is equal to the maximum likelihood value we can achieve by choosing the specific term distributions by setting of t parameters.',
+                                 'If we define Q(f , h, t ) to be the likelihood assigned to the data by a particular distribution (t ) from the model defined by f and h, then the best fit within the model is maxt Q(f , h, t ).',
+                                 'If we want to find the best model, i.e. the one containing the best distribution for the data, then we maximize the above quantity over choices of f and h. We can conflate these two maximizations and find our best model by taking the values f and h from argmaxf,h,t Q(f , h, t ).',
+                                 'By setting t to be the maximum likelihood value we risk over-fitting.',
+                                 'While this would not be a good setting for t when performing retrieval, where we want to predict future data, it is acceptable in this case where we want to best describe our existing data, especially because, as we will discuss, there are very few f and h values.',
+                                 'Let us first consider how we would develop a model that accurately explains a single set of documents, such as those documents relevant to a particular query.',
+                                 'Such a model is unrealistic, as the goal of the hyper-learned model is to accurately fit many queries, but is a good starting point.',
+                                 'Recall that the probability of observing an individual document can T be expressed as t=0 Pr(dt | t ).',
+                                 'To find the probability of the entire document set we find the product Pr(dt | t ) over all terms and all documents.',
+                                 'Because dt is always a small non-negative integer, and, in fact, is almost always zero, we can, without losing almost any information, consider only the cases where dt is less than some small integer k. Taking nt to be the number of documents in which term t occurs i i times, we can express the probability of observing the entire document set as Q= tT i k Pr(i | t )ni , t',
+                                 'we use computational methods, performing a simple gradient ascent.',
+                                 'Given some fixed f and h values, it is straightforward to find (globally) optimum t values.',
+                                 'Similarly, given fixed t values, we can find the (locally) optimum functions f and h. We iterate over these two procedures to find a maximum.',
+                                 'Because Q is convex in the parameters t but non-convex in the values f and h, we cannot guarantee gradient ascent finds a globally optimum model.',
+                                 'A better optimum could be found by combining a more sophisticated non-convex optimization algorithm on the f and h values with the fast and simple convex optimization of the t values.',
+                                 '6.1.1 Finding the Best t Given f and h The probability of observing each document, and thus the ob jective Q, is concave with respect to each parameter t . We prove concavity by showing that the second derivative of log(Q) with respect to t is negative.',
+                                 'Note that because the probabilities of term occurrences are small, we sometimes work with log (Q) instead of Q. The second derivative of log(Q) is ik d2 log(Q) h(i)2 Pr(i | t ) = -N dt 2 =0 2 k i h(i) Pr(i | t ) . +N =0',
+                                 'Since i=0 h(i) Pr(i | t ) is equal to the expectation, E [h(i)], we can rewrite the second derivative as = -N (E [h(i)2 ] - E [h(i)]2 ) = -N Var[h(i)].',
+                                 'Variance is never negative, so the second derivative is never positive and log(Q) is concave with respect to t . It follows that if we know the functions f and h, we can find the most likely t for each term using convex optimization.',
+                                 'To find t we do a simple bisection search to find where first the derivative of log(Q) with respect to t , ik , n d log(Q) = h(i) t - N Pr(i | t ) i dt =0',
+                                 'k',
+                                 '=0 =0',
+                                 'Finding f and h is simply a matter of finding the 2(k + 1) values the two functions take at each possible i to maximize Q. In our experiments, we take k to be 5, but even a k of 2 covers describes 99.9% of all term occurrences.',
+                                 'However, our goal is to accurately fit many sets of documents, and not just one.',
+                                 'To perform retrieval we would like to model all sets of documents relevant to any query.',
+                                 'The approach remains much the same in this case.',
+                                 'Our training data is a collection of document sets, and in hyperlearning we aim to fix values f and h that explain all of these document sets.',
+                                 'Each document set may reflect a different distribution drawn from the model.',
+                                 'Thus, we use a distinct parameter R for same term t in each document set R. If t R represents the class of document sets, and R R is a particular document set, the ob jective function Q becomes Rd Q= Pr(d | R ).',
+                                 't R R',
+                                 'is equal to zero.',
+                                 '6.1.2 Finding the Best f and h Given t Unlike for t , the ob jective function is not convex in f and h. Nonetheless, to find f and h we do a simple gradient ascent to a local optimum, using a nd T , nt 1t d log (Q) = i - N Pr(i | t ) df (i) f (i) =0',
+                                 'tT n d log (Q) = t t - N Pr(i | t ) i dh(i) =0',
+                                 'Because a term can have a different distribution in each document set, we can treat the same term uniquely in each set.',
+                                 'This allows us to map this equation back to the single document set equation.',
+                                 'Thus, we focus our discussion on the notationally simpler single-set formula, knowing it applies equally to a collection of document sets.',
+                                 'The problem of optimizing Q is a large multivariate optimization problem.',
+                                 'There is no obvious analytic solution, so',
+                                 'the gradient functions, to aid our search.',
+                                 'Because log(Q) is not convex with respect to f and h, where we start our learning is very important.',
+                                 'If we do not start somewhere good, we could converge to a poor local maximum.',
+                                 'As our starting point, we used the Poisson',
+                                 'dt f h',
+                                 '0 0.9121 -1.4235',
+                                 '1 0.0210 2.0466',
+                                 '2 0.0034 3.0635',
+                                 '3 0.0011 3.4882',
+                                 '4 0.0005 3.6882',
+                                 '5 0.0012 3.7714',
+                                 'Table 1: The hyper-learned values for f and h. family (f (i) = (i!)-1 and h(i) = i).',
+                                 'The Poisson family is commonly used to model term distributions and is the exponential-family cousin of the multinomial family.',
+                                 '6.2 Data Set We hyper-learned the family of term distributions over sets of relevant documents.',
+                                 'Each set was comprised of the relevant documents for a particular query from TREC 1 and 2 (queries 51-150).',
+                                 'The query result sets ranged from containing just tens of documents and under a thousand unique terms, to containing almost a thousand documents and tens of thousands of unique terms.',
+                                 'We used sets of relevant documents for several reasons.',
+                                 'First, as we will discuss in Section 7.1, we consider the problem of understanding relevant document set distributions more interesting for retrieval purposes than understanding the corpus or irrelevant documents.',
+                                 'Additionally, because the set of all documents relevant to a query is considerably smaller than all documents that are irrelevant to a query, relevant document sets are also considerably more varied within a given corpus than irrelevant document sets.',
+                                 'The largely overlapping irrelevant document sets would not allow us to generalize well.',
+                                 'Using the smaller relevant document sets also made our analysis more computationally feasible.',
+                                 'but instead hyper-learned on a randomly selected "training" subset of the 100 relevant document sets.',
+                                 'The model we found when using fewer document sets was very similar to the one found using all 100 document sets, and by not learning over all of the sets we were able to test our model on the remaining "testing" sets.',
+                                 'To test the model quality we used a family hyper-learned over 40 query result sets to predict the existence of the other 60 result sets.',
+                                 'We computed the maximum likelihood t for each term from a subset of the documents in the testing subset and then used those specific term distributions to find the probability of the remaining documents.',
+                                 'The average log probability of observing an unobserved relevant document set was much higher using the hyper-learned family (-428,164) than using the Poisson family (-517,171).',
+                                 'In other words, the new model was less surprised than the Poisson model to see documents it had not seen before.',
+                                 '7.',
+                                 'RETRIEVING WITH NEW MODEL Given a better hyper-learned model, we turn to its use in retrieval, text classification, and relevance feedback tasks.',
+                                 'We found that by improving the Poisson generative model by hyper-learning from the text a better family of distributions, we were also able to improve retrieval performance.',
+                                 'In this section we first discuss how we estimated the model parameters (t ) to perform the queries and then we present our results.',
+                                 '7.1 Estimating the Distributions Our analysis so far has focused on how well our model is able to explain labeled data.',
+                                 'As was discussed earlier, in order use the model to generalize from labeled to unlabeled date (e.g., to assign relevance ranking values to unlabeled documents based on some relevance judgments) we must incorporate a prior so as to avoid over-fitting the labeled data.',
+                                 'To be able to rank a document we needed to specify both the relevant and irrelevant probability distributions for a term, so we need priors for both.',
+                                 'We took different approaches to the two distributions, which we discuss separately here.',
+                                 '6.3 The Hyper-Learned Model The functions f and h we found by hyper-learning over all 100 relevant document sets are shown in Table 1 and Figure 2.',
+                                 'Both f and h in the hyper-learned model are substantially different from their Poisson starting points.',
+                                 'The hyper-learned curve h is much flatter than the original Poisson function for nonzero x. This ensures that for any , there is less of a difference in probability of multiple occurrences, and thus a heavier tail (more burstiness), than for the Poisson model.',
+                                 'Figure 1 illustrates this heavier tail on an example distribution for the maximum likelihood setting of , and suggests that the new distribution family does more closely match our data.',
+                                 '7.1.1 Relevant Distributions In estimating the specific relevant term distributions (defined by t ) within our hyper-learned model, we assume we have observed some labeled information.',
+                                 'This can either be a description of an information need (e.g., a keyword query), which we treat as a single labeled relevant document, or actual labeled relevant documents.',
+                                 'One of the benefits of one-parameter exponentially families is that they have a so-called conjugate prior distribution that is extremely easy to work with.',
+                                 'All information in the labeled data can be summarized, to the extent that it affects the choice of t , with two sufficient statistics, 1 and 2 [1].',
+                                 'The statistic 1 represents the number of observations, and is the same for all terms.',
+                                 'The statistic 2 represents the sum of all h(dt ) values observed for a particular term.',
+                                 'The prior is specified by an initial setting of 1 and 2 , and can be thought of as reflecting the observation of a certain number of "imaginary" documents.',
+                                 'The prior is updated by adding the true observations to the imaginary ones to get final values for 1 and 2 . Based on the sufficient statistics, the probability of t is',
+                                 '5 0',
+                                 '10',
+                                 'New Model Poisson',
+                                 '4 3',
+                                 '10',
+                                 '-1',
+                                 'h(x) -2 -3',
+                                 'f(x)',
+                                 '2 1 0',
+                                 '10',
+                                 '10',
+                                 '-1 -2 0',
+                                 'New Model Poisson 1 2',
+                                 '0',
+                                 '1',
+                                 '2',
+                                 'x',
+                                 '3',
+                                 '4',
+                                 '5',
+                                 'x',
+                                 '3',
+                                 '4',
+                                 '5',
+                                 'Figure 2: The functions f and h that define the hyper-learned family, compared with those that define the Poisson family.',
+                                 'To test how good our hyper-learned model is, we did not hyper-learn the best f and h over all 100 document sets,',
+                                 'proportional to Pr(t ) i k f (i)et h(i) -1 e t 2 , (3)',
+                                 '=0',
+                                 'While there is also no obvious analytic solution for this problem, Pr() is convex, so we can optimize it by bisection search.',
+                                 'In practice, for greater efficiency, we make a table of left hand side values as a function of t . Once we observe our sufficient statistics, 1 and 2 , we can use them to find the correct t via a table lookup.',
+                                 'and set it equal to zero.',
+                                 'It is zero when E [h(dt )] is equal to the h(dt ) values we observe empirically, namely when k t h(i) 2 i=0 f (i)h(i)e =.',
+                                 'k 1 f (i)et h(i) i=0',
+                                 'This proportionality constant is difficult to compute for general , but becomes irrelevant when we find the MAP estimate (most likely value) for t by taking the derivative of Equation 3, , k t h(i) d Pr(t ) i=0 f (i)h(i)e = Pr(t ) 2 - 1 k t h(i) dt i=0 f (i)e',
+                                 'distributions, and the distributions we used to find other relevant documents.',
+                                 'This is the framework that matches most directly the standard machine learning model from Section 3, as the occurrences pattern of a document feature in the labeled documents is used to MAP-estimate its probability distribution in all relevant documents.',
+                                 'We evaluated a model hyper-learned (to find f and h) over 26 relevant document sets by testing it on the remaining 74 queries from TREC 1 and 2.',
+                                 'To set our prior we imagined we had observed 10 documents with the corpus distribution.',
+                                 'We then used 20 randomly selected relevant documents from each of the 74 test relevant document sets to learn the specific term distributions (t ) for each query.',
+                                 'Figure 3 shows the performance on the remaining documents of the hyperlearned model compared with the Poisson model.',
+                                 'The new model out-performs the Poisson model in all areas of the precision-recall curve.',
+                                 'The average precision for the hyperlearned model (0.1643) is higher than that for the Poisson model (0.1411).',
+                                 '0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0 0 New Model Poisson',
+                                 '7.1.2 Irrelevant Distributions To find our ranking value, we also need the term distributions within the irrelevant documents.',
+                                 'Since for any given query, almost all documents are irrelevant, we chose not to apply our exponential-family-with-a-prior framework, and instead approximate the irrelevant document distribution of each term by its empirical distribution within the corpus.',
+                                 'This whole-corpus problem is quite different.',
+                                 'Unlike result sets for unknown future queries, the entire corpus is available in advance.',
+                                 'Thus, we need not be concerned about over-fitting that will mismatch future unseen data.',
+                                 'Using the corpus distribution as the irrelevant distribution could potentially be inaccurate.',
+                                 'A given query term, for example, might appear only in documents relevant to the query.',
+                                 'However, it does simplify our approach, allowing us to set the irrelevant document distribution at preprocessing time, without a query.',
+                                 'Furthermore, it is unclear that our exponential model, trained on the relatively coherent sets of relevant documents, would accurately model the much more diverse set of irrelevant documents, so there was no real incentive to assume the extra complexity.',
+                                 'Precision',
+                                 '0.2',
+                                 '0.4',
+                                 '0.6',
+                                 '0.8',
+                                 '1',
+                                 'Recall',
+                                 'Figure 3: Results using the hyper-learned model, compared with results using a Poisson model.',
+                                 'Twenty labeled documents were used to estimate the specific term distributions.',
+                                 '7.2.2 Using a Query A query is a more common way to specify an information need.',
+                                 'We treat a query as a single labeled relevant document and apply the classification scheme of the previous section.',
+                                 'This gives us a RV of + l n0 + + f t (dt ) t ¯ og (h(x) - h(0))ht log f (0) n dt t d ( , t h(qt ) h(dt ) - h(0)) c+1 q where c represents the number of observations we\'ve made ¯ for our prior, and ht is our belief about term t assuming it doesn\'t appear in the query.',
+                                 'Our preliminary results using the titles of the TREC Topics 50-150 were poor.',
+                                 'We speculate that this failure is related to the length normalization issue discussed earlier.',
+                                 'As can be seen in the equation above, a document\'s ranking value has a component that is strongly affected by document length.',
+                                 'Since a short query provides information about so few specific terms, this length effect dominates the presence or absence of specific terms.',
+                                 'We took a quick, though less well founded, approach to correct for this by restricting our algorithm to only use those terms present in the query.',
+                                 'This',
+                                 '7.2 Retrieval Results In this section we show how our hyper-learned model performed on retrieval tasks.',
+                                 'We first show that our model does improve retrieval when we make a good estimate of the term distributions.',
+                                 'We then discuss how the model could be used in a more typical environment, where the only information provided about the relevant distributions is a short query, and retrieval must be done in real time.',
+                                 '7.2.1 Using Labeled Documents We first wanted to get a good idea of how our model worked when we actually had a good estimate of the term distributions, while being sure it generalized sufficiently.',
+                                 'One way to do this, similar to relevance feedback, is to assume that there are a number of labeled relevant documents.',
+                                 'These labeled documents we used to estimate the specific term',
+                                 'meant that for the document portion of the ranking value, we only summed over query terms.',
+                                 'The results, displayed in Figure 4, show performance under this scheme is better in all areas of the curve than the Poisson model, as well as comparable to tf.idf [18], performing slightly worse in areas of high precision, and better in areas of low precision.',
+                                 'Tf.idf New Model Poisson',
+                                 'retrieval to specific languages, specific domains, and even specific search preferences.',
+                                 '9.',
+                                 'ACKNOWLEDGMENTS The authors are grateful to Stephen Robertson and Tommi Jaakola for their input on this work.',
+                                 '10.',
+                                 'REFERENCES 0.5',
+                                 '0.4',
+                                 '0.3',
+                                 '0.2',
+                                 '0.1',
+                                 '0 0',
+                                 '0.2',
+                                 '0.4',
+                                 '0.6',
+                                 '0.8',
+                                 '1',
+                                 'Recall',
+                                 'Figure 4: The hyper-learned model on short queries, compared with the Poisson model and tf.idf.',
+                                 '8.CONCLUSIONS AND FUTURE WORK',
+                                 'By working with the statistical properties of text, we i were able to learn a na¨ve Bayesian model that more closely matched our corpus than multinomial or Poisson models.',
+                                 'We discussed how to learn such a model and how to use it for retrieval.',
+                                 'We found that in learning more likely term distribution families, we were not only able to better describe our data, but we were also able to improve retrieval quality in some cases.',
+                                 'Although we used the hyper-learned model for information retrieval, an advantages of using a model is that it can be generalized to other applications such as classification and relevance feedback.',
+                                 'For example, while we did not study it in our experiments, the Bayesian machine learning framework could be used for automatic relevance feedback, using unlabeled documents that seem relevant to modify its believed relevant-document distribution.',
+                                 'Nigam et al. [20] got good results with this approach using the multinomial model, and we conjecture that our model, more accurate than the multinomial, could further improve performance.',
+                                 'We also believe that by learning a better model from the text, we could get even better performance gains.',
+                                 'We currently use a simple gradient ascent method to hyper-learn the best distribution family, but would like to find a more global optima by incorporating smarter optimization techniques.',
+                                 'Also, because it is likely that length has a significant impact on the quality of the model, it should be incorporated into the model in a principled way.',
+                                 'Learning analytic functions for f and h could allow us to replace some of our table lookup steps by closed forms and enable us to handle terms that occur more than k times in a document.',
+                                 'It will also be interesting to investigate how general the model we learned over the TREC corpus is. If the same model could be learned from many different corpora, then we can apply our improvements to different situations, and even use the model to help us gain a better understaning of language.',
+                                 'On the other hand, if the model varies greatly based on the text it describes, then learning the model becomes particularly important, making it possible to tailor',
+                                 '[1] J. M. Bernardo and A. F. M. Smith.',
+                                 'Bayesian Theory.',
+                                 'John Wiley & Sons, 1994.',
+                                 '[2] K. Church and W. Gale.',
+                                 'Poisson mixtures.',
+                                 'Natural Language Engineering, 1(2):163­190, 1995.',
+                                 '[3] S. Eyheramendy, D. D. Lewis, and D. Madigan.',
+                                 'On the naive Bayes mo del for text classification.',
+                                 'In Artificial Intel ligence & Statistics, 2003.',
+                                 '[4] L. Fitzpatrick and M. Dent.',
+                                 'Automatic feedback using past queries: So cial searching?',
+                                 'In SIGIR, 1997.',
+                                 '[5] N. Fuhr.',
+                                 'Probabilistic mo dels in information retrieval.',
+                                 'The Computer Journal, 35(3):243­255, 1992.',
+                                 '[6] A. T. Gous.',
+                                 'Adaptive estimation of distributions using exp onential sub-families.',
+                                 'Journal of Computational and Graphical Statistics, 7(3):388­396, 1998.',
+                                 '[7] W. R. Greiff.',
+                                 'A theory of term weighting based on exploratory data analysis.',
+                                 'In SIGIR, 1998.',
+                                 '[8] A. Griffith, H. C. Luckhurst, and P. Willett.',
+                                 'Using interdo cument similarity information in do cument retrieval systems.',
+                                 'JASIS, 37:3­11, 1986.',
+                                 '[9] D. Heckerman.',
+                                 'A tutorial on learning with Bayesian networks.',
+                                 'Technical Rep ort MSR TR-95-06, Microsoft Research, 1995.',
+                                 'Revised 1996.',
+                                 '[10] R. Jin, A. G. Hauptmann, and C. Zhai.',
+                                 'Title language mo del for information retrieval.',
+                                 'In SIGIR, 2002.',
+                                 '[11] K. S. Jones.',
+                                 'A statistical interpretation of term sp ecificity and its application in retrieval.',
+                                 'Journal of Documentation, 28:11­21, 1972.',
+                                 '[12] K. S. Jones, S. Walker, and S. Rob ertson.',
+                                 'A probabilistic mo del of information retrieval: development and status.',
+                                 'Technical Rep ort TR-446, Cambridge University Computer Lab oratory, 1998.',
+                                 '[13] T. Kalt.',
+                                 'A new probabilistic mo del of text classification and retrieval.',
+                                 'Technical Rep ort IR-78, University of Massachusetts Center for Intelligent Information Retrieval, 1996.',
+                                 '[14] S. Katz.',
+                                 'Distribution of content words and phrases in text and language mo delling.',
+                                 'Natural Language Engineering, 2(1):15­60, 1996.',
+                                 '[15] K. L. Kwok and M. Chan.',
+                                 'Improving two-stage ad-ho c retrieval for short queries.',
+                                 'In SIGIR, 1998.',
+                                 '[16] D. D. Lewis.',
+                                 'Naive (Bayes) at forty: The indep endence assumption in information retrieval.',
+                                 'In EMCL, 1998.',
+                                 '[17] H. P. Luhn.',
+                                 'A statistical approach to mechanized enco ding and searching of literary information.',
+                                 'IBM Journal of Research and Developement, 1(4):309­317, 1957.',
+                                 '[18] K. McKeown, J. Klavans, V. Hatzivassiloglou, R. Barzilay, and E. Eskin.',
+                                 'Towards multido cument summarization by reformulation: Progress and prosp ects.',
+                                 'In AAAI, 1999.',
+                                 '[19] K. Ng.',
+                                 'A maximum likeliho o d ratio information retrieval mo del. In TREC-8, 1999.',
+                                 '[20] K. Nigam, A. K. McCallum, S. Thrun, and T. M. Mitchell.',
+                                 'Learning to classify text from lab eled and unlab eled do cuments.',
+                                 'In AAAI, 1998.',
+                                 '[21] J. M. Ponte and W. B. Croft.',
+                                 'A language mo deling approach to information retrieval.',
+                                 'In SIGIR, 1998.',
+                                 '[22] S. Rob ertson and S. Walker.',
+                                 'Some simple effective approximations to the 2-Poisson mo del for probabilistic weighted retrieval.',
+                                 'In SIGIR, 1994.',
+                                 '[23] C. J. vanRijsb ergen.',
+                                 'Information Retrieval.',
+                                 'Butterworths, 1979.',
+                                 '[24] C. Zhai and J. Lafferty.',
+                                 'Two-stage language mo dels for information retrieval.',
+                                 'In SIGIR, 2002.',
+                                 'Precision'
+                               ],
+                 'Data' => [
+                             {
+                               'EndTime' => 'Wed Apr 20 05:56:17 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:56:14 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:56:19 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:56:17 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:56:22 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:56:19 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:56:26 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:56:22 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:56:30 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:56:26 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:56:33 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:56:30 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:56:34 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:56:33 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:56:37 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:56:34 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:56:41 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:56:37 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:56:42 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:56:41 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:56:46 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:56:42 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:56:49 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:56:46 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:56:51 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:56:49 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:56:55 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:56:51 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:56:58 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:56:55 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:03 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:56:58 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:05 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:03 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:08 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:05 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:11 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:08 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:14 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:11 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:18 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:14 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:21 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:18 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:24 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:21 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:28 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:24 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:29 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:28 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:31 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:29 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:31 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:31 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:35 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:31 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:35 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:35 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:37 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:35 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:38 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:37 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:40 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:38 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:45 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:40 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:46 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:45 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:51 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:46 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:54 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:51 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:56 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:54 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:57:59 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:56 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:58:03 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:57:59 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:58:07 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:58:03 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:58:09 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:58:07 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:58:10 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:58:09 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:58:12 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:58:10 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:58:14 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:58:12 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:58:17 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:58:14 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:58:20 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:58:17 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:58:23 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:58:20 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:58:24 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:58:23 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:58:26 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:58:24 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:58:31 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:58:26 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:58:37 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:58:31 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:58:39 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:58:37 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:58:44 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:58:39 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:58:48 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:58:44 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:58:51 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:58:48 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:58:55 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:58:51 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:58:56 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:58:55 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:58:58 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:58:56 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:59:00 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:58:58 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:59:02 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:59:00 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:59:06 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:59:02 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:59:07 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:59:06 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:59:11 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:59:07 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:59:16 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:59:11 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:59:19 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:59:16 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:59:19 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:59:19 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:59:25 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:59:19 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:59:28 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:59:25 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:59:32 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:59:28 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:59:34 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:59:32 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:59:38 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:59:34 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:59:40 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:59:38 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:59:43 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:59:40 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:59:47 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:59:43 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:59:50 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:59:47 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:59:53 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:59:50 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:59:55 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:59:53 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 05:59:59 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:59:55 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:04 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 05:59:59 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:08 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:04 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:13 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:08 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:17 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:13 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:20 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:17 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:21 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:20 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:23 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:21 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:27 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:23 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:28 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:27 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:28 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:28 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:28 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:28 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:32 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:28 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:35 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:32 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:39 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:35 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:39 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:39 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:40 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:40 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:41 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:40 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:41 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:41 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:42 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:41 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:42 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:42 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:43 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:42 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:43 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:43 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:43 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:43 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:44 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:43 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:45 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:44 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:45 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:45 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:46 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:45 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:47 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:46 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:49 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:47 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:51 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:49 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:54 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:51 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:00:57 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:54 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:00 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:00:57 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:03 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:00 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:06 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:03 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:10 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:06 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:11 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:10 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:14 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:11 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:17 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:14 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:21 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:17 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:24 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:21 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:27 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:24 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:29 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:27 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:31 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:29 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:35 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:31 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:37 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:35 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:39 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:37 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:43 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:39 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:44 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:43 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:47 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:44 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:50 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:47 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:52 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:50 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:54 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:52 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:01:57 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:54 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:05 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:01:57 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:05 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:05 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:08 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:05 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:10 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:08 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:12 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:10 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:14 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:12 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:17 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:14 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:23 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:17 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:24 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:23 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:26 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:24 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:28 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:26 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:35 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:28 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:35 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:35 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:39 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:35 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:40 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:39 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:43 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:40 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:43 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:43 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:47 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:43 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:49 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:47 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:51 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:49 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:55 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:51 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:02:57 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:55 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:03:01 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:02:57 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:03:03 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:03:01 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:03:05 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:03:03 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:03:08 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:03:05 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:03:13 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:03:08 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:03:16 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:03:13 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:03:19 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:03:16 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:03:23 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:03:19 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:03:26 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:03:23 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:03:30 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:03:26 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:03:34 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:03:30 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:03:37 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:03:34 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:03:41 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:03:37 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:03:44 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:03:41 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:03:47 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:03:44 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:03:53 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:03:47 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:04:01 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:03:53 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:04:02 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:04:01 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:04:07 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:04:02 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:04:11 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:04:07 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:04:16 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:04:11 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:04:17 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:04:16 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:04:20 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:04:17 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:04:23 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:04:20 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:04:27 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:04:23 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:04:30 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:04:27 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:04:32 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:04:30 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:04:36 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:04:32 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:04:40 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:04:36 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:04:42 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:04:40 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:04:47 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:04:42 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:04:48 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:04:47 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:04:51 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:04:48 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:04:55 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:04:51 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:05:01 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:04:55 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:05:02 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:05:01 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:05:08 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:05:02 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:05:11 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:05:08 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:05:13 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:05:11 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:05:16 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:05:13 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:05:18 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:05:16 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:05:27 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:05:18 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:05:28 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:05:27 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:05:30 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:05:28 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:05:33 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:05:30 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:05:36 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:05:33 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:05:40 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:05:36 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:05:45 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:05:40 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:05:51 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:05:45 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:05:56 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:05:51 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:01 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:05:56 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:05 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:01 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:05 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:05 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:06 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:05 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:11 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:06 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:13 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:11 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:15 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:13 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:16 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:15 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:19 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:16 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:21 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:19 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:26 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:21 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:26 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:26 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:27 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:26 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:33 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:27 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:36 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:34 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:38 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:36 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:40 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:38 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:42 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:40 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:44 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:42 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:45 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:44 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:46 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:45 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:48 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:46 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:50 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:48 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:51 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:50 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:52 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:51 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:53 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:52 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:55 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:53 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:56 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:55 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:58 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:56 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:06:59 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:58 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:01 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:06:59 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:03 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:01 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:06 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:03 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:08 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:06 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:11 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:08 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:14 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:11 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:16 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:14 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:20 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:16 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:24 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:20 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:26 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:24 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:29 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:26 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:31 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:29 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:35 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:31 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:38 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:35 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:42 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:38 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:47 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:42 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:49 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:47 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:49 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:49 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:52 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:49 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:55 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:52 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:07:58 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:55 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:01 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:07:58 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:06 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:01 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:09 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:06 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:11 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:09 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:14 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:11 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:17 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:14 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:21 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:17 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:25 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:21 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:29 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:25 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:32 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:29 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:35 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:32 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:38 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:35 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:40 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:38 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:42 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:40 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:45 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:42 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:48 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:45 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:49 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:48 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:49 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:49 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:50 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:49 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:50 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:50 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:51 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:50 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:51 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:51 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:52 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:51 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:53 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:52 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:54 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:53 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:54 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:54 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:54 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:54 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:55 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:54 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:56 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:55 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:56 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:56 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:56 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:56 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:56 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:56 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:57 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:56 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:57 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:57 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:57 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:57 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:58 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:57 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:58 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:58 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:58 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:58 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:59 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:58 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:08:59 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:59 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:02 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:08:59 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:04 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:02 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:06 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:04 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:07 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:06 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:09 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:07 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:14 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:09 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:15 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:14 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:18 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:15 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:19 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:18 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:25 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:19 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:26 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:25 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:31 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:26 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:34 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:31 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:36 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:34 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:39 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:36 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:42 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:39 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:44 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:42 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:47 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:44 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:50 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:47 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:53 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:50 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:58 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:53 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:09:59 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:58 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:01 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:09:59 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:02 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:01 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:04 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:02 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:06 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:04 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:09 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:06 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:13 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:09 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:14 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:13 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:15 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:14 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:15 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:15 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:16 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:15 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:16 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:16 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:17 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:16 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:17 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:17 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:19 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:17 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:21 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:19 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:23 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:21 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:25 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:23 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:32 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:25 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:34 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:32 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:36 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:34 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:39 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:36 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:41 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:39 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:44 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:42 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:45 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:44 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:47 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:45 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:49 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:47 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:53 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:49 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:57 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:53 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:10:59 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:57 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:00 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:10:59 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:02 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:00 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:07 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:02 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:08 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:07 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:11 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:08 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:11 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:11 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:13 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:11 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:14 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:13 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:15 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:14 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:15 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:15 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:16 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:15 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:17 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:16 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:17 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:17 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:18 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:17 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:18 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:18 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:19 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:18 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:20 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:19 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:20 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:20 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:21 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:20 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:21 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:21 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:23 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:21 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:24 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:23 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:27 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:24 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:29 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:27 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:33 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:29 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:36 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:33 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:41 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:36 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:45 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:41 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:47 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:45 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:50 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:47 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:53 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:50 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:11:57 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:53 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:02 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:11:57 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:06 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:02 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:07 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:06 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:08 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:07 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:09 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:08 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:10 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:09 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:11 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:10 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:13 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:11 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:14 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:13 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:15 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:14 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:17 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:15 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:18 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:17 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:20 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:18 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:21 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:20 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:22 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:21 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:23 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:22 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:25 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:23 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:26 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:25 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:27 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:26 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:30 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:27 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:31 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:30 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:33 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:31 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:33 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:33 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:35 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:33 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:37 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:35 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:38 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:37 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:39 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:38 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:40 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:39 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:43 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:40 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:44 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:43 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:45 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:44 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:47 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:45 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:47 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:47 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:49 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:47 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:51 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:49 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:52 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:51 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:54 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:52 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:55 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:54 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:58 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:55 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:12:59 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:58 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:00 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:12:59 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:03 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:00 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:04 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:03 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:06 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:04 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:08 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:06 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:09 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:08 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:11 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:09 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:12 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:11 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:13 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:12 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:15 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:13 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:16 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:15 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:17 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:16 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:19 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:17 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:21 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:19 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:24 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:21 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:26 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:24 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:26 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:26 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:27 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:26 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:29 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:27 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:32 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:29 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:33 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:32 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:34 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:33 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:36 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:34 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:37 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:36 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:38 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:37 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:39 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:38 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:41 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:39 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:42 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:41 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:43 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:42 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:44 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:43 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:45 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:44 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:47 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:45 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:48 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:47 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:49 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:48 EDT 2005
+',
+                               'Read' => 1
+                             },
+                             {
+                               'EndTime' => 'Wed Apr 20 06:13:49 EDT 2005
+',
+                               'StartTime' => 'Wed Apr 20 06:13:49 EDT 2005
+',
+                               'Read' => 1
+                             }
+                           ]
+               }, 'Clear::DocData' );

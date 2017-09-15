@@ -1,0 +1,42 @@
+#!/usr/bin/perl -w
+
+use BOSS::Config;
+use Clear::Voy::Index;
+
+my $specification = "
+	-d			Remove index
+	-g			Generate index
+	-p			Print index
+	-c			Convert voys in voy index
+	-k			Generate user knowledge model
+";
+
+my $config = BOSS::Config->new
+		(Spec => $specification,
+		 ConfFile => "");
+my $conf = $config->CLIConfig;
+
+my $voyindex = Clear::Voy::Index->new
+  (StorageFile => "data/voy.idx");
+
+$voyindex->Load;
+
+if (exists $conf->{-d}) {
+  system "rm data/voy.idx";
+}
+
+if (exists $conf->{-g}) {
+  $voyindex->Index;
+}
+
+if (exists $conf->{-p}) {
+  $voyindex->Print;
+}
+
+if (exists $conf->{-c}) {
+  $voyindex->ConvertVoysInVoyIndex;
+}
+
+if (exists $conf->{-k}) {
+  $voyindex->GenerateUserKnowledgeModelFromVoyIndex;
+}

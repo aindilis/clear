@@ -1,0 +1,21 @@
+#!/usr/bin/perl -w
+
+use Clear;
+use UniLang::Agent::Agent;
+use UniLang::Util::Message;
+
+$UNIVERSAL::agent = UniLang::Agent::Agent->new
+  (
+   Name => "CLEAR",
+   ReceiveHandler => \&Receive,
+  );
+$UNIVERSAL::clear = Clear->new();
+
+sub Receive {
+  my %args = @_;
+  $sender = $args{Message}->Sender;
+  $command = $args{Message}->Contents;
+  $UNIVERSAL::clear->ProcessCommand($command,$sender);
+}
+
+$UNIVERSAL::clear->Execute;

@@ -1,0 +1,173 @@
+application icongmusicbrowser
+
+  • Main
+  • Screenshots
+  • Download
+  • Guide
+  • FAQ
+  • Development
+  • Forums
+  • Wiki
+
+Trace: • dbus_api
+[                    ][Search]
+  • customization
+  • guide
+  • install
+  • playground
+  • plugins
+  • third_party_apps
+  • translations
+  • wiki
+  • dbus_api
+  • plans
+  • start
+
+  • Show pagesource
+  • Old revisions
+  • Recent changes
+  • Backlinks
+  • Media Manager
+  • Sitemap
+  • Login
+  • Back to top
+
+Table of Contents
+
+  • DBus API
+      □ Functions
+      □ Signals
+
+DBus API
+
+Quick documentation of the DBus APi. If you need more info, you are invited to
+look at the file gmusicbrowser_dbus.pm or you can of course contact me
+(Quentin)
+
+More functions wil be added in the future (suggestions welcome).
+
+These functions can be used in other programs, or through the dbus-send
+command-line program.
+
+examples using dbus-send :
+
+  • To toggle play/pause state :
+
+dbus-send --dest=org.gmusicbrowser /org/gmusicbrowser org.gmusicbrowser.RunCommand string:PlayPause
+
+  • To gets info for the current song :
+
+dbus-send --print-reply --dest=org.gmusicbrowser /org/gmusicbrowser org.gmusicbrowser.CurrentSong
+
+  • To get current song position :
+
+dbus-send --print-reply --dest=org.gmusicbrowser /org/gmusicbrowser org.gmusicbrowser.GetPosition
+
+The output of dbus-send is not very easy to parse, so you might want to use
+this small perl script instead :
+
+#!/usr/bin/perl
+use warnings;
+use strict;
+use Net::DBus;
+
+my $bus = Net::DBus->session;
+my $service = $bus->get_service('org.gmusicbrowser');
+my $object = $service->get_object('/org/gmusicbrowser', 'org.gmusicbrowser');
+
+my $info= $object->CurrentSong;
+print "$_ : $info->{$_}\n" for sort keys %$info;
+print "position : ".$object->GetPosition."\n";
+
+It will print the info and position of the current song, it can also easily be
+modified to suit your needs.
+
+Functions
+
+RunCommand
+
+Takes a string as argument, this string is the name of a command with optional
+arguments.
+
+See the output of ”gmusicbrowser -listcmd” for a list of comands and their
+arguments.
+
+No return value
+
+CurrentSong
+
+no arguments
+
+returns a hash/dictionary containing info on the current song. Currently the
+hash contains these fields : title, album, artist, length, track, disc.
+
+More fields may be added in future versions.
+
+GetPosition
+
+no arguments
+
+returns the position in the current song in seconds
+
+Playing
+
+no arguments
+
+returns a boolean, true if playing, false if stopped/paused.
+
+Set
+
+Takes 3 strings as arguments:
+
+  • path/filename of song OR numeric ID of the song
+  • field to change
+  • new value
+
+returns true if succeeded, false if failed (in particular if the song couldn't
+be found in the library)
+
+Be careful with this function, the new value is not checked for validity as
+much as it should be.
+
+Get
+
+Takes 2 strings as argument:
+
+  • path/filename of song OR numeric ID of the song
+  • field
+
+returns the value of the field
+
+GetLibrary
+
+no arguments
+
+returns the list of songs ID in the library
+
+GetAlbumCover
+
+takes a string as argument
+
+returns the filename of the cover if the string match an album name that has a
+cover
+
+Note that the filename of the cover may be a mp3 file with an embedded cover.
+
+May change in future versions with the support of multiple albums with the same
+name.
+
+Signals
+
+SongChanged
+
+Emitted when the current song changes with the song ID of the new song as
+argument.
+
+dbus_api.txt · Last modified: 2013/04/03 06:29 (external edit)
+                    CC Attribution-Share Alike 3.0 Unported
+  www.chimeric.de Valid CSS Driven by DokuWiki do yourself a favour and use a
+     real browser - get firefox!! Recent changes RSS feed Valid XHTML 1.0
+*
+
+[piwik]
+
